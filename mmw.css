@@ -1,0 +1,231 @@
+
+.rcs {
+  border-radius: 5px;
+  background: #FFFFFF;
+  padding: 3px 4px 3px 4px;  
+  margin-bottom: 96px;
+  box-shadow: 1px 1px 1px 1px rgba(128, 128, 128, 0.6);
+}
+.rcs * {display: inline-block;vertical-align: top;}
+.rcs .center {display: inline-block;font-size: 12px;line-height: 15px;vertical-align: middle}
+
+.fa {
+    margin : 0px 0px 0px 0px;    
+    color:red;
+}
+
+.area {
+  position: absolute;
+  background: rgb(249, 247, 134);
+  border: 1px solid #888;
+  border-radius: 3px;
+  font-size: 12px;
+  top: -5px;
+  left: 15px;
+  padding:2px;
+}
+
+input[type=text], select {
+  width: 55px;  
+  padding: 0px 0px;
+  margin: 2px 2px;
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-sizing: border-box;
+  margin-bottom: 0px;
+  vertical-align: center;  
+  height: 18px;font-size: 12px;line-height: 18px;  
+  z-index: 10;
+}
+
+a:link {
+  text-decoration: none;
+  cursor:pointer;
+}
+
+.curp{
+    cursor:pointer;
+}
+
+html, body {width:100%;height:100%;margin:0;padding:0;overflow: hidden;user-select: text;} 
+.map_wrap {position:relative;overflow:hidden;width:100%;height:350px;}
+
+
+#menu_wrap_m {position:absolute;left:0;bottom:62px;height:240px;width:160px;margin:3px 0 5px 10px;padding:5px;overflow-y:auto;background:rgba(255, 255, 255, 0.7);z-index: 9999;font-size:13px;border-radius: 0px;line-height:22px;font-family:'Malgun Gothic', '留묒� 怨좊뵓', sans-serif;}
+
+#menu_wrap_m hr {display: block; height: 1px;border: 0; border-top: 2px solid #5F5F5F;margin:3px 0;}
+#menu_wrap_m .option{text-align: center;}
+
+.radius_border{border:1px solid #919191;border-radius:5px;}     
+
+.etc {overflow:auto;white-space:nowrap;width:200px;height:100%;}
+
+
+.label {margin-bottom: 96px;}
+.label * {display: inline-block;vertical-align: top;}
+.label .left {background: url("https://t1.daumcdn.net/localimg/localimages/07/2011/map/storeview/tip_l.png") no-repeat;display: inline-block;height: 24px;overflow: hidden;vertical-align: top;width: 7px;}
+.label .center {background: url(https://t1.daumcdn.net/localimg/localimages/07/2011/map/storeview/tip_bg.png) repeat-x;display: inline-block;font-size: 12px;background-color: rgba(255, 255, 255, 0.8);line-height: 24px;}
+.label .right {background: url("https://t1.daumcdn.net/localimg/localimages/07/2011/map/storeview/tip_r.png") -1px 0  no-repeat;display: inline-block;height: 24px;overflow: hidden;width: 6px;}
+
+
+.showlistbox {
+    line-height:40px;padding:3px;font-size:12px;border-radius:3px;font-family:Malgun Gothic, 留묒� 怨좊뵓, sans-serif;    
+}
+
+#menu_rule {position:absolute;right:300;bottom:15;height:18px;width:148px;margin:0px 0px 0px 0px;padding:5px;overflow-y:none;background:rgba(255, 255, 255, 0.8);z-index: 1;font-size:12px;border-radius: 0px;}
+.bg_white {background:#fff;}
+#menu_rule hr {display: block; height: 1px;border: 0; border-top: 2px solid #5F5F5F;margin:3px 0;}
+#menu_rule .option{text-align: center;}
+
+#menu_rule_m {position:absolute;left:10;top:10;height:18px;width:148px;margin:0px 0px 0px 0px;padding:5px;overflow-y:none;background:rgba(255, 255, 255, 0.8);z-index: 1;font-size:12px;border-radius: 0px;}
+.bg_white {background:#fff;}
+#menu_rule_m hr {display: block; height: 1px;border: 0; border-top: 2px solid #5F5F5F;margin:3px 0;}
+#menu_rule_m .option{text-align: center;}
+
+
+.info {position:relative;top:5px;left:5px;border-radius:6px;border: 1px solid #ccc;border-bottom:2px solid #ddd;font-size:12px;padding:5px;background:#fff;list-style:none;margin:0;} 
+.info:nth-of-type(n) {border:0; box-shadow:0px 1px 2px #888;}    
+.number {font-weight:bold;color:#00a0e9;} 
+
+.dot {overflow:hidden;float:left;width:12px;height:12px;background: url('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/mini_circle.png');}    
+.dotOverlay {position:relative;bottom:10px;border-radius:6px;border: 1px solid #ccc;border-bottom:2px solid #ddd;float:left;font-size:12px;padding:5px;background:#fff;}
+.dotOverlay:nth-of-type(n) {border:0; box-shadow:0px 1px 2px #888;}    
+.number {font-weight:bold;color:#ee6152;}
+.dotOverlay:after {content:'';position:absolute;margin-left:-6px;left:50%;bottom:-8px;width:11px;height:8px;background:url('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/vertex_white_small.png')}
+.distanceInfo {position:relative;top:5px;left:5px;list-style:none;margin:0;}
+.distanceInfo .label {display:inline-block;width:50px;}
+.distanceInfo:after {content:none;}
+
+.maptable {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 250px;
+    font-size:12px;
+    table-layout: fixed;    
+    font-family:Malgun Gothic, 留묒� 怨좊뵓, sans-serif;    
+}
+  
+td, th {
+    border: 0px solid #dddddd;
+    text-align: left;
+    padding: 3px;
+}
+  
+.navitable {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 200px;
+    font-size:12px;
+    font-family:Malgun Gothic, 留묒� 怨좊뵓, sans-serif;  
+}
+  
+.sel_text:hover { background:#cdcdcd; }  
+
+
+:root {
+  --button-color: #ffffff;
+  --button-bg-color: #0d6efd;
+  --button-hover-bg-color: #025ce2;
+}
+
+button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  
+  background: var(--button-bg-color);
+  color: var(--button-color);
+  
+  margin: 0.1rem;
+  padding: 0px 0.1rem;
+  
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px;
+  text-align: center;
+  text-decoration: none;
+  
+  border: none;
+  border-radius: 4px;
+  
+  display: inline-block;
+  width: auto;
+  
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  
+  cursor: pointer;
+  
+  transition: 0.5s;
+}
+
+.bbasic {
+    background-color: #0d6efd;
+    border: none;  
+    color: white;
+    text-decoration: none;    
+}
+
+.bsuccess {
+    background-color: #28a745;
+    border: none;  
+    color: white;    
+    text-decoration: none;    
+    --button-hover-bg-color: #218838;        
+}
+
+.bwarning {  
+    background-color: #ffc107;
+    border: none;  
+    color: black;    
+    text-decoration: none;   
+    --button-hover-bg-color: #e0a800;    
+}
+
+
+.berror {
+    background-color: #dc3545;
+  --button-hover-bg-color: #c82333;
+}
+
+.bdone {
+  background-color: #212529;
+  border: none;  
+  color: black;    
+  text-decoration: none;   
+  --button-hover-bg-color:#212529;
+  
+}
+
+button.success {
+  --button-bg-color: #28a745;
+  color: black;    
+  --button-hover-bg-color: #218838;
+}
+
+button.error {
+  --button-bg-color: #dc3545;
+  --button-hover-bg-color: #c82333;
+}
+
+button.done {
+  --button-bg-color:  #212529;
+  --button-hover-bg-color: black; 
+}
+
+button.warning {
+  --button-color: #212529;
+  --button-bg-color: #ffc107;
+  --button-hover-bg-color: #e0a800;
+}
+
+
+
+button:active,
+button:hover,
+button:focus {
+  background: var(--button-hover-bg-color);
+  outline: 0;
+}
+button:disabled {
+  opacity: 0.5;
+}
