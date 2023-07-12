@@ -1312,4 +1312,7 @@ function RulerRemove(){
                     circles[i].overlay.setMap(null);
                 }         
     circles = [];
+// 그리기 종료
+    setRuleClear();
+
 }
