@@ -1,3 +1,4 @@
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <html>
 <!-- Default Statcounter code for hamanCCTV
@@ -21,7 +22,6 @@ referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
     <meta charset="utf-8">
     <title>GIS 모바일</title>
     <link rel="shortcut icon" type="image/x-icon" href="https://raw.githubusercontent.com/kang-chan/hamancctv4/main/favicon.ico" />
-	<link rel="stylesheet" href="https://hamancctv.github.io/2/mmw.css">
 <script type ="text/javascript" src="https://hamancctv.github.io/2/mmw.js"> </script>
 </head> 
     
@@ -55,6 +55,10 @@ referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
     scrollbar-width: none; /* Firefox */
 }
 
+#menu_rule {position:absolute;left:2;top:45;height:24px;width:197px;margin:0px 0px 0px 0px;padding:5px;overflow-y:none;background:rgba(255, 255, 255, 0.8);z-index: 1;font-size:12px;border-radius: 0px;}
+.bg_white {background:#fff;}
+#menu_rule hr {display: block; height: 1px;border: 0; border-top: 2px solid #5F5F5F;margin:3px 0;}
+#menu_rule .option{text-align: center;}
     </style>
 
 <div id="container">
@@ -1362,6 +1366,14 @@ kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
 
     
 </script>
+
+
+    <div id="menu_rule" class="bg_white" style="border:1px solid #919191;border-radius:5px;">   
+        <button id='btnMARKER' onclick="rule_line()">거리</button>
+	    <button id='btnPOLYLINE'  onclick="rule_poly()">면적</button>
+        <button id='btnARROW'  onclick="rule_circle()">반경</button>    
+        <button class='berror' onclick="RulerRemove()">초기화</button></div>
+
 <div id="menu_wrap" class="bg_white" style="border:1px solid #919191;border-radius:10px;">
 <div class='sel_txt' style='cursor: pointer;' onClick='setCenter(35.2643129874132, 128.489259058209)'><span class='name'>도-001-산인신당고개(회전)<br>&nbsp&nbsp&nbsp산인-018&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp산인면 신산리 107-6<br>&nbsp&nbsp&nbsp172.14.10.11&nbsp&nbsp30670320-0001</span></div>
 <div class='sel_txt' style='cursor: pointer;' onClick='setCenter(35.2833312506004, 128.402859093824)'><span class='name'>도-002-가야함안중앞01<br>&nbsp&nbsp&nbsp가야-017&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp가야읍 도항리 127-24<br>&nbsp&nbsp&nbsp172.14.10.13&nbsp&nbsp30670320-0021</span></div>
