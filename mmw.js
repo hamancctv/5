@@ -765,6 +765,8 @@ function rule_circle()
 
             // 그리기 상태를 그리고 있지 않는 상태로 바꿉니다
             drawingFlagCir = false;
+                // 그리기 실행종료
+                setRuleClear();
 
             // 중심 좌표를 초기화 합니다  
             centerPosition = null;
@@ -959,7 +961,9 @@ function rule_line()
             }
             
             // 상태를 false로, 그리지 않고 있는 상태로 변경합니다
-            drawingFlagLine = false;          
+            drawingFlagLine = false;  
+            // 그리기 실행 종료
+            setRuleClear();
         }  
 
     }
@@ -1258,6 +1262,7 @@ var clickHandler = function(event) {
             
             // 상태를 false로, 그리지 않고 있는 상태로 변경합니다
             drawingFlagPoly = false;    
+            // 그리기 실행 종료
           setRuleClear();
         }  
 
