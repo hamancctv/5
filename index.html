@@ -336,7 +336,8 @@ navigator.geolocation.getCurrentPosition(function(pos) {
 			map: map,
 			position: new kakao.maps.LatLng(myPosLat, myPosLng),
 			image: markerImage,
-			title : "내위치"
+			title : "내위치",
+			clickable: false
 		});
 					myMarker.setVisible(false);
 
