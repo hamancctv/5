@@ -832,6 +832,7 @@ function rule_circle()
 
 function rule_line()
 {
+marker2.setClickable(false);
     setRuleClear();
 
     // 지도에 클릭 이벤트를 등록합니다
