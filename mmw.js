@@ -833,8 +833,7 @@ function rule_circle()
 function rule_line()
 {
     setRuleClear();
-    marker2.setClickable(false);
-
+    
     // 지도에 클릭 이벤트를 등록합니다
     // 지도를 클릭하면 선 그리기가 시작됩니다 그려진 선이 있으면 지우고 다시 그립니다
 
@@ -1098,7 +1097,7 @@ function rule_line()
 }
 
 function setRuleClear() {
-        marker2.setClickable(true);
+        marker2.setClickable(false);
 
     kakao.maps.event.removeListener(map, 'click', clickHandlerRule);
     kakao.maps.event.removeListener(map, 'mousemove', mousemoveHandlerRule);
