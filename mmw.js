@@ -1098,6 +1098,8 @@ function rule_line()
 }
 
 function setRuleClear() {
+        marker2.setClickable(true);
+
     kakao.maps.event.removeListener(map, 'click', clickHandlerRule);
     kakao.maps.event.removeListener(map, 'mousemove', mousemoveHandlerRule);
     kakao.maps.event.removeListener(map, 'rightclick', rightclickHandlerRule);       
