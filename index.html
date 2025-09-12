@@ -353,13 +353,7 @@ var sel_txt = [];    // 글상자 목록
 Promise.all([
     fetch('markers.json').then(res => res.json()),
     fetch('sel_txt.json').then(res => res.json())
-]).then(([markersData, selTxtData]) => {
-    positions = markersData;
-    sel_txt = selTxtData;
-
-    console.log('positions:', positions);
-    console.log('sel_txt:', sel_txt);
-});
+];
 // 여기까지 끝
 	
 
