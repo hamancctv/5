@@ -1,4 +1,4 @@
-[
+
 <div class='sel_txt' style='cursor: pointer;' onClick='setCenter(35.2643129874132, 128.489259058209)'><span class='name'>도-001-산인신당고개(회전)<br> 산인-018 172.14.10.11<br> 172.14.10.11 306703200001</span></div>"
 <div class='sel_txt' style='cursor: pointer;' onClick='setCenter(35.2833312506004, 128.402859093824)'><span class='name'>도-002-가야함안중앞01<br> 가야-017 172.14.10.13<br> 172.14.10.13 306703200021</span></div>"
 <div class='sel_txt' style='cursor: pointer;' onClick='setCenter(35.2833312506004, 128.402859093824)'><span class='name'>도-002-가야함안중앞02<br> 가야-017 172.14.10.217<br> 172.14.10.14 306703200021</span></div>"
@@ -1672,4 +1672,4 @@
 <div class='sel_txt' style='cursor: pointer;' onClick='setCenter(35.3185717406745, 128.56788106383)'><span class='name'>차-S33-칠원소목마을_칠원방향<br> 칠원-045 178.22.10.115<br>  306703200172</span></div>"
 <div class='sel_txt' style='cursor: pointer;' onClick='setCenter(35.2487976403339, 128.43632340181)'><span class='name'>차-R31-함안대산리_함안방향<br> 함안-003 178.22.10.139<br>  306703200010</span></div>"
 <div class='sel_txt' style='cursor: pointer;' onClick='setCenter(35.2487976403339, 128.43632340181)'><span class='name'>차-R32-함안대산리_입곡방향<br> 함안-003 178.22.10.140<br>  306703200010</span></div>"
-]
+
