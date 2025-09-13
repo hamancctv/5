@@ -1,7 +1,10 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <html>
-
+<div id="alert-overlay">
+    <div id="alert-message"></div>
+</div>
+    
 <head>
     <meta charset="utf-8">
     <title>GIS 모바일</title>
@@ -82,7 +85,22 @@
         opacity: 0;
     }
 }
-              
+     
+       #alert-overlay {
+    position: fixed; /* 화면에 고정 */
+    top: 50px; /* 맨 위에서 20px 아래에 위치 */
+    left: 50%; /* 가로 중앙 정렬을 위한 시작점 */
+    transform: translateX(-50%); /* 정확한 가로 중앙 정렬 */
+    background-color: rgba(0, 0, 0, 0.7); /* 반투명 검은색 배경 */
+    color: white; /* 글자색 */
+    padding: 15px 30px;
+    border-radius: 8px;
+    z-index: 1000; /* 다른 요소 위에 표시 */
+    display: none; /* 초기에는 숨기기 */
+    font-size: 1.2em;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
     </style>
 
 <div id="container">
@@ -2209,99 +2227,115 @@ kakao.maps.event.addListener(map, 'center_changed', function() {
         $('#gpsyx').val(latlng.getLat() + ', ' + latlng.getLng());  
 });
     
-// ✅ 검색 버튼 클릭 이벤트 핸들러
+// ✅ 4. 검색 버튼 클릭 이벤트 핸들러 (순차적 검색 시작)
 function btnsearch_click() {
-    // 1. 모든 포커스 태그를 blur 합니다.
     $(':focus').blur();
-
-    // 2. 검색에 사용할 영역 객체를 미리 정의합니다.
+    var keyword = $('#keyword').val();
     var bounds = new kakao.maps.LatLngBounds(
-      new kakao.maps.LatLng(35.119382493091855, 128.18218076324376), // 남서쪽 좌표
-      new kakao.maps.LatLng(35.42383291087308, 128.59320201946082) // 북동쪽 좌표
+        new kakao.maps.LatLng(35.119382493091855, 128.18218076324376),
+        new kakao.maps.LatLng(35.42383291087308, 128.59320201946082)
     );
 
-    // 3. 주소-좌표 변환 객체를 생성합니다.
     var geocoder = new kakao.maps.services.Geocoder();
+    var geocoderOptions = { bounds: bounds };
 
-    // 4. 주소로 좌표를 검색합니다. (✅ 수정: options 객체 추가)
-    var geocoderOptions = {
-        bounds: bounds
-    };
-    geocoder.addressSearch($('#keyword').val(), function(result, status) {
-        // 검색 결과를 처리하는 단일 함수를 호출합니다.
-        handleSearchResult(result, status, 'address');
+    // 주소 검색을 먼저 시도합니다.
+    geocoder.addressSearch(keyword, function(result, status) {
+        handleSearchSequentially(result, status, keyword, bounds);
     }, geocoderOptions);
+}
 
-    // 5. 장소 검색 객체를 생성합니다.
+// ✅ 5. 순차적 검색 로직을 처리하는 핵심 함수
+function handleSearchSequentially(data, status, keyword, bounds) {
+    // 주소 검색 성공 시
+    if (status === kakao.maps.services.Status.OK && data.length > 0) {
+        var coords = new kakao.maps.LatLng(data[0].y, data[0].x);
+        var placeName = data[0].address_name;
+        
+        if (bounds.contain(coords)) {
+            clearMapObjects();
+            displayResult(coords, placeName);
+        } else {
+            // 주소는 맞지만 지역 내에 없으면 키워드 검색으로 넘어갑니다.
+            startKeywordSearch(keyword, bounds);
+        }
+
+    } else {
+        // 주소 검색 실패 시, 키워드 검색을 시작합니다.
+        startKeywordSearch(keyword, bounds);
+    }
+}
+
+// ✅ 6. 키워드 검색을 시작하는 함수
+function startKeywordSearch(keyword, bounds) {
     var ps = new kakao.maps.services.Places();
+    var psOptions = { bounds: bounds };
 
-    // 6. 키워드로 장소를 검색합니다. (✅ 수정: 위에서 정의한 bounds 사용)
-    var psOptions = {
-        bounds: bounds
-    };
-    ps.keywordSearch("함안군 " + $('#keyword').val(), function(data, status, pagination) {
-        // 검색 결과를 처리하는 단일 함수를 호출합니다.
-        handleSearchResult(data, status, 'keyword');
+    ps.keywordSearch("함안군 " + keyword, function(data, status, pagination) {
+        // 키워드 검색 성공 시
+        if (status === kakao.maps.services.Status.OK && data.length > 0) {
+            var coords = new kakao.maps.LatLng(data[0].y, data[0].x);
+            var placeName = data[0].place_name;
+
+            if (bounds.contain(coords)) {
+                clearMapObjects();
+                displayResult(coords, placeName);
+            }
+        } else {
+            // 모든 검색이 실패한 경우
+            showAlert("검색 결과가 없습니다.");
+        }
     }, psOptions);
 }
 
-// ... (handleSearchResult 함수는 변경 없음) ...
+// ✅ 7. 오버레이 경고창을 보여주는 함수
+function showAlert(message) {
+    const alertOverlay = $('#alert-overlay');
+    const alertMessage = $('#alert-message');
+    alertMessage.text(message);
+    alertOverlay.fadeIn(300);
 
-// 주소와 장소 검색 결과를 모두 처리하는 공통 함수
-function handleSearchResult(data, status, searchType) {
-    if (status === kakao.maps.services.Status.OK) {
-        var coords;
-        
-        // 검색 유형에 따라 좌표를 가져옵니다.
-        if (searchType === 'address') {
-            coords = new kakao.maps.LatLng(data[0].y, data[0].x);
-        } else if (searchType === 'keyword') {
-            coords = new kakao.maps.LatLng(data[0].y, data[0].x);
-        }
-
-        // 6. 마커, 원을 생성하고 지도에 표시합니다.
- //        var marker = new kakao.maps.Marker({
- //          map: map,
- //        image: markerImage1,
- //      position: coords
- // 	});
-
-        var circle = new daum.maps.Circle({
-            center: coords,
-            radius: 50,
-            strokeWeight: 1,
-            strokeColor: '#ffa500',
-            strokeOpacity: 1,
-            strokeStyle: 'dashed',
-            fillColor: '#FF1000',
-            fillOpacity: 0.3
-        });
-
-        circle.setMap(map);
-        setTimeout(function() {
-            circle.setMap(null);
-        }, 1000);
-
-        // 7. 지도 레벨과 중심을 조정합니다.
-        map.setLevel(2);
-        map.setCenter(coords);
-
-        // 8. 마커를 배열에 추가합니다.
-        markers.push(marker);
-
-    } else {
-        // 검색 실패 시
-        console.log("검색 결과가 없습니다.");
-    }
+    setTimeout(function() {
+        alertOverlay.fadeOut(500);
+    }, 5000);
 }
+
+// ✅ 8. 기존 마커와 목록을 정리하는 함수
+function clearMapObjects() {
+    if (searchMarker) {
+        searchMarker.setMap(null);
+    }
+    $('#placesList').empty();
+}
+
+// ✅ 9. 결과를 지도와 목록에 표시하는 함수
+function displayResult(coords, name) {
+    searchMarker = new kakao.maps.Marker({
+        map: map,
+        image: markerImage1,
+        position: coords
+    });
+
+    var circle = new daum.maps.Circle({
+        center: coords,
+        radius: 50,
+        strokeWeight: 1,
+        strokeColor: '#ffa500',
+        strokeOpacity: 1,
+        strokeStyle: 'dashed',
+        fillColor: '#FF1000',
+        fillOpacity: 0.3
+    });
+    circle.setMap(map);
+    setTimeout(function() { circle.setMap(null); }, 1000);
+
+    map.setLevel(2);
+    map.setCenter(coords);
     
-// 지도를 클릭한 위치에 표출할 마커입니다
-    var imageSrc = 'https://raw.githubusercontent.com/kang-chan/hamancctv2/main/rainbow.png', // 마커이미지의 주소입니다    
-    imageSize = new kakao.maps.Size(40, 50), // 마커이미지의 크기입니다
-    imageOption = {offset: new kakao.maps.Point(20, 45)}; // 마커이미지의 옵션입니다. 마커의 좌표와 일치시킬 이미지 안에서의 좌표를 설정합니다.
-      
-
-
+    var item = $('<div class="sel_txt"><span class="name"></span></div>');
+    item.find('.name').text(name);
+    $('#placesList').append(item);
+}
     
 // 지도에 클릭 이벤트를 등록합니다
 // 지도를 클릭하면 마지막 파라미터로 넘어온 함수를 호출합니다
