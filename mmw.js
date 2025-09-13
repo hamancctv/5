@@ -1319,18 +1319,4 @@ function RulerRemove(){
 
 }
 
-// ✅ (추가) menu_wrap의 가시성을 업데이트하는 전용 함수
-function updateMenuWrapVisibility() {
-    // #menu_wrap 내부에 현재 보이는(visible) 항목이 있는지 확인합니다.
-    // 'li' 태그나 검색 결과 목록을 담고 있는 태그로 변경해야 할 수 있습니다.
-    var visibleItemsCount = $('#menu_wrap > div:visible').length;
-    
-    // 보이는 항목의 개수가 0보다 크면
-    if (visibleItemsCount > 0) {
-        // menu_wrap을 보여줍니다.
-        $('#menu_wrap').show();
-    } else {
-        // 보이는 항목이 없으면 menu_wrap을 숨깁니다.
-        $('#menu_wrap').hide();
-    }
-}
+
