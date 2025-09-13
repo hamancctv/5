@@ -1,14 +1,16 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <html>
-
+<div id="alert-overlay">
+    <div id="alert-message"></div>
+</div>
 <head>
     <meta charset="utf-8">
     <title>GIS 모바일</title>
     <link rel="shortcut icon" type="image/x-icon" href="https://raw.githubusercontent.com/kang-chan/hamancctv4/main/favicon.ico" />
 <script type ="text/javascript" src="mmw.js"> </script>
 </head> 
-    
+    <body>
    <style>
 #container {overflow:hidden;height:100%;position:relative;}
 #mapWrapper {width:100%;height:100%;z-index:1;}
@@ -82,7 +84,22 @@
         opacity: 0;
     }
 }
-              
+           
+       #alert-overlay {
+    position: fixed;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 8px;
+    z-index: 1000;
+    display: none;
+    font-size: 1.2em;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
     </style>
 
 <div id="container">
@@ -2270,32 +2287,23 @@ function handleSearchResult(data, status, searchType) {
         searchFailCount++;
 
         if (searchFailCount >= 2) {
-            showOverlayAlert("검색 결과가 없습니다.");
+            showAlert("검색 결과가 없습니다.");
             $('#keyword').focus();
         }
     }
 }
+// ✅ 7. 오버레이 경고창을 보여주는 함수
+function showAlert(message) {
+    const alertOverlay = $('#alert-overlay');
+    const alertMessage = $('#alert-message');
+    alertMessage.text(message);
+    alertOverlay.fadeIn(300);
 
-// 🔔 오버레이 경고창 표시 함수
-function showOverlayAlert(message) {
-    var content = '<div style="padding:10px; background:#fff; border:2px solid red; border-radius:5px; font-size:14px; font-weight:bold;">' 
-                  + message + '</div>';
-
-    var position = map.getCenter(); // 현재 지도 중심에 표시
-    var customOverlay = new kakao.maps.CustomOverlay({
-        position: position,
-        content: content,
-        xAnchor: 0.5,
-        yAnchor: 1.5
-    });
-
-    customOverlay.setMap(map);
-
-    // 2초 뒤 자동으로 사라지게
     setTimeout(function() {
-        customOverlay.setMap(null);
-    }, 5000);
+        alertOverlay.fadeOut(500);
+    }, 3000);
 }
+
 
     
 // 지도를 클릭한 위치에 표출할 마커입니다
