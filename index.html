@@ -2231,22 +2231,16 @@ function btnsearch_click() {
     }, psOptions);
 }
 
-// ✅ 검색 결과 처리 핸들러 (원래의 동작만 포함)
+// ✅ 경고창과 메뉴랩 제어 기능이 모두 제거된 핸들러
 function handleSearchResult(data, status, searchType, bounds) {
-    if (status === kakao.maps.services.Status.OK) {
-        // 기존 검색 마커를 제거합니다.
-        if (searchMarker) {
-            searchMarker.setMap(null);
-        }
+    // 기존 검색 마커를 제거합니다.
+    if (searchMarker) {
+        searchMarker.setMap(null);
+    }
+    // 목록 내용을 비웁니다.
+    $('#placesList').empty();
 
-        // 목록 내용을 비우고, 검색 결과로 다시 채웁니다.
-        $('#placesList').empty();
-
-        if (!data || data.length === 0) {
-            alert("검색 결과가 없습니다.");
-            return;
-        }
-        
+    if (status === kakao.maps.services.Status.OK && data.length > 0) {
         var coords;
         var placeName;
 
@@ -2286,8 +2280,7 @@ function handleSearchResult(data, status, searchType, bounds) {
             var item = $('<div class="sel_txt"><span class="name"></span></div>');
             item.find('.name').text(placeName);
             $('#placesList').append(item);
-
-        } 
+        }
     }
 }
 </script>
