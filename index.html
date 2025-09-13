@@ -2207,64 +2207,43 @@ kakao.maps.event.addListener(map, 'center_changed', function() {
         $('#gpsyx').val(latlng.getLat() + ', ' + latlng.getLng());  
 });
     
- 
+// 전역 변수 (검색 실패 횟수 카운트)
+var searchFailCount = 0;
+
 function btnsearch_click() {
-    // 1. 모든 포커스 태그를 blur 합니다.
     $(':focus').blur();
 
-    // 2. 검색에 사용할 영역 객체를 미리 정의합니다.
     var bounds = new kakao.maps.LatLngBounds(
       new kakao.maps.LatLng(35.119382493091855, 128.18218076324376), // 남서쪽 좌표
-      new kakao.maps.LatLng(35.42383291087308, 128.59320201946082) // 북동쪽 좌표
+      new kakao.maps.LatLng(35.42383291087308, 128.59320201946082)  // 북동쪽 좌표
     );
 
-    // 3. 주소-좌표 변환 객체를 생성합니다.
     var geocoder = new kakao.maps.services.Geocoder();
+    var geocoderOptions = { bounds: bounds };
 
-    // 4. 주소로 좌표를 검색합니다. (✅ 수정: options 객체 추가)
-    var geocoderOptions = {
-        bounds: bounds
-    };
+    // 주소 검색
     geocoder.addressSearch($('#keyword').val(), function(result, status) {
-        // 검색 결과를 처리하는 단일 함수를 호출합니다.
         handleSearchResult(result, status, 'address');
     }, geocoderOptions);
 
-    // 5. 장소 검색 객체를 생성합니다.
     var ps = new kakao.maps.services.Places();
+    var psOptions = { bounds: bounds };
 
-    // 6. 키워드로 장소를 검색합니다. (✅ 수정: 위에서 정의한 bounds 사용)
-    var psOptions = {
-        bounds: bounds
-    };
+    // 키워드 검색
     ps.keywordSearch("함안군 " + $('#keyword').val(), function(data, status, pagination) {
-        // 검색 결과를 처리하는 단일 함수를 호출합니다.
         handleSearchResult(data, status, 'keyword');
     }, psOptions);
+
+    // 검색 시작할 때 실패 카운트 초기화
+    searchFailCount = 0;
 }
 
-// ... (handleSearchResult 함수는 변경 없음) ...
-
-// 주소와 장소 검색 결과를 모두 처리하는 공통 함수
+// 공통 처리 함수
 function handleSearchResult(data, status, searchType) {
-    if (status === kakao.maps.services.Status.OK) {
-        var coords;
-        
-        // 검색 유형에 따라 좌표를 가져옵니다.
-        if (searchType === 'address') {
-            coords = new kakao.maps.LatLng(data[0].y, data[0].x);
-        } else if (searchType === 'keyword') {
-            coords = new kakao.maps.LatLng(data[0].y, data[0].x);
-        }
+    if (status === kakao.maps.services.Status.OK && data.length > 0) {
+        var coords = new kakao.maps.LatLng(data[0].y, data[0].x);
 
-        // 6. 마커, 원을 생성하고 지도에 표시합니다.
- //        var marker = new kakao.maps.Marker({
- //          map: map,
- //        image: markerImage1,
- //      position: coords
- // 	});
-
-        var circle = new daum.maps.Circle({
+        var circle = new kakao.maps.Circle({
             center: coords,
             radius: 50,
             strokeWeight: 1,
@@ -2280,18 +2259,44 @@ function handleSearchResult(data, status, searchType) {
             circle.setMap(null);
         }, 1000);
 
-        // 7. 지도 레벨과 중심을 조정합니다.
         map.setLevel(2);
         map.setCenter(coords);
 
-        // 8. 마커를 배열에 추가합니다.
-        markers.push(marker);
+        // 🔹 성공했으면 실패 카운트 리셋
+        searchFailCount = 0;
 
     } else {
-        // 검색 실패 시
-        console.log("검색 결과가 없습니다.");
+        // 🔹 검색 실패 시 카운트 증가
+        searchFailCount++;
+
+        if (searchFailCount >= 2) {
+            showOverlayAlert("검색 결과가 없습니다.");
+            $('#keyword').focus();
+        }
     }
 }
+
+// 🔔 오버레이 경고창 표시 함수
+function showOverlayAlert(message) {
+    var content = '<div style="padding:10px; background:#fff; border:2px solid red; border-radius:5px; font-size:14px; font-weight:bold;">' 
+                  + message + '</div>';
+
+    var position = map.getCenter(); // 현재 지도 중심에 표시
+    var customOverlay = new kakao.maps.CustomOverlay({
+        position: position,
+        content: content,
+        xAnchor: 0.5,
+        yAnchor: 1.5
+    });
+
+    customOverlay.setMap(map);
+
+    // 2초 뒤 자동으로 사라지게
+    setTimeout(function() {
+        customOverlay.setMap(null);
+    }, 5000);
+}
+
     
 // 지도를 클릭한 위치에 표출할 마커입니다
     var imageSrc = 'https://raw.githubusercontent.com/kang-chan/hamancctv2/main/rainbow.png', // 마커이미지의 주소입니다    
