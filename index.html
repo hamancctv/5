@@ -2248,10 +2248,16 @@ kakao.maps.event.addListener(map, 'center_changed', function() {
 // ✅ (추가) 전역 변수로 검색 결과를 위한 마커 변수를 선언합니다.
 var searchMarker = null;
 
-// ✅ 1. 검색창에 키보드 입력(keyup)이 있을 때 실행되는 함수
+// ✅ 1. 입력창에 키보드 입력(keyup)이 있을 때 실행되는 함수
 $('#keyword').on('keyup', function() {
     var query = $(this).val().toLowerCase();
-    
+
+    // 입력창이 비어 있으면 바로 메뉴랩을 숨기고 종료합니다.
+    if (query === '') {
+        $('#menu_wrap').hide();
+        return;
+    }
+
     // 목록 항목들의 가시성 상태를 변경합니다.
     var items = document.getElementsByClassName("sel_txt");
     var visibleItemCount = 0;
@@ -2270,7 +2276,7 @@ $('#keyword').on('keyup', function() {
         }
     }
 
-    // ✅ 2. 필터링이 완료된 후, 보이는 항목의 개수를 확인하여 메뉴랩을 제어합니다.
+    // 필터링이 완료된 후, 보이는 항목의 개수를 확인하여 메뉴랩을 제어합니다.
     if (visibleItemCount > 0) {
         $('#menu_wrap').show();
     } else {
@@ -2278,8 +2284,7 @@ $('#keyword').on('keyup', function() {
     }
 });
 
-// ✅ 3. 카카오맵 API의 검색 결과를 처리하는 함수는 기존대로 유지합니다.
-// 이 함수는 '지도 마커'와 '원'을 처리하는 역할만 담당합니다.
+// ✅ 2. 카카오맵 API의 검색 결과를 처리하는 함수
 function handleSearchResult(data, status, searchType, bounds) {
     if (status === kakao.maps.services.Status.OK) {
         if (searchMarker) {
@@ -2319,7 +2324,10 @@ function handleSearchResult(data, status, searchType, bounds) {
             map.setLevel(3);
             map.setCenter(coords);
         }  
-    } 
+    } else {
+        // ✅ "검색 결과가 없습니다" 경고창을 제거합니다.
+        // menu_wrap 가시성은 실시간 필터링 로직이 처리합니다.
+    }
 }
 </script>
 
