@@ -2209,96 +2209,57 @@ kakao.maps.event.addListener(map, 'center_changed', function() {
         $('#gpsyx').val(latlng.getLat() + ', ' + latlng.getLng());  
 });
     
- function btnsearch_click() {
-    // 1. 모든 포커스 태그를 blur 합니다.
+// ✅ 검색 버튼 클릭 이벤트 핸들러
+function btnsearch_click() {
     $(':focus').blur();
 
-    // 2. 검색에 사용할 영역 객체를 미리 정의합니다.
     var bounds = new kakao.maps.LatLngBounds(
-        new kakao.maps.LatLng(35.119382493091855, 128.18218076324376), // 남서쪽 좌표
-        new kakao.maps.LatLng(35.42383291087308, 128.59320201946082) // 북동쪽 좌표
+        new kakao.maps.LatLng(35.119382493091855, 128.18218076324376),
+        new kakao.maps.LatLng(35.42383291087308, 128.59320201946082)
     );
 
-    // 3. 주소-좌표 변환 객체를 생성합니다.
     var geocoder = new kakao.maps.services.Geocoder();
-
-    // 4. 주소로 좌표를 검색합니다.
-    var geocoderOptions = {
-        bounds: bounds
-    };
+    var geocoderOptions = { bounds: bounds };
     geocoder.addressSearch($('#keyword').val(), function(result, status) {
-        // ✅ (수정) handleSearchResult에 bounds 변수를 전달합니다.
         handleSearchResult(result, status, 'address', bounds);
     }, geocoderOptions);
 
-    // 5. 장소 검색 객체를 생성합니다.
     var ps = new kakao.maps.services.Places();
-
-    // 6. 키워드로 장소를 검색합니다.
-    var psOptions = {
-        bounds: bounds
-    };
-    ps.keywordSearch("함안군 "+$('#keyword').val(), function(data, status, pagination) {
-        // ✅ (수정) handleSearchResult에 bounds 변수를 전달합니다.
+    var psOptions = { bounds: bounds };
+    ps.keywordSearch("함안군 " + $('#keyword').val(), function(data, status, pagination) {
         handleSearchResult(data, status, 'keyword', bounds);
     }, psOptions);
 }
 
-// ... (handleSearchResult 함수는 변경 없음) ...
-// ✅ (추가) 전역 변수로 검색 결과를 위한 마커 변수를 선언합니다.
-var searchMarker = null;
-
-// ✅ 1. 입력창에 키보드 입력(keyup)이 있을 때 실행되는 함수
-$('#keyword').on('keyup', function() {
-    var query = $(this).val().toLowerCase();
-
-    // 입력창이 비어 있으면 바로 메뉴랩을 숨기고 종료합니다.
-    if (query === '') {
-        $('#menu_wrap').hide();
-        return;
-    }
-
-    // 목록 항목들의 가시성 상태를 변경합니다.
-    var items = document.getElementsByClassName("sel_txt");
-    var visibleItemCount = 0;
-
-    for (var j = 0; j < items.length; j++) {
-        var nameElem = items[j].getElementsByClassName("name")[0];
-        
-        // 이름에 쿼리값이 포함되는지 확인합니다.
-        var isMatch = (nameElem && nameElem.innerHTML.toLowerCase().indexOf(query) > -1);
-        
-        // 조건에 따라 항목을 보이거나 숨깁니다.
-        items[j].style.display = isMatch ? "flex" : "none";
-        
-        if (isMatch) {
-            visibleItemCount++;
-        }
-    }
-
-    // 필터링이 완료된 후, 보이는 항목의 개수를 확인하여 메뉴랩을 제어합니다.
-    if (visibleItemCount > 0) {
-        $('#menu_wrap').show();
-    } else {
-        $('#menu_wrap').hide();
-    }
-});
-
-// ✅ 2. 카카오맵 API의 검색 결과를 처리하는 함수
+// ✅ 검색 결과 처리 핸들러 (원래의 동작만 포함)
 function handleSearchResult(data, status, searchType, bounds) {
     if (status === kakao.maps.services.Status.OK) {
+        // 기존 검색 마커를 제거합니다.
         if (searchMarker) {
             searchMarker.setMap(null);
         }
 
+        // 목록 내용을 비우고, 검색 결과로 다시 채웁니다.
+        $('#placesList').empty();
+
+        if (!data || data.length === 0) {
+            alert("검색 결과가 없습니다.");
+            return;
+        }
+        
         var coords;
+        var placeName;
+
         if (searchType === 'address') {
             coords = new kakao.maps.LatLng(data[0].y, data[0].x);
+            placeName = data[0].address_name;
         } else if (searchType === 'keyword') {
             coords = new kakao.maps.LatLng(data[0].y, data[0].x);
+            placeName = data[0].place_name;
         }
 
         if (bounds.contain(coords)) {
+            // 지도에 마커를 표시합니다.
             searchMarker = new kakao.maps.Marker({
                 map: map,
                 image: markerImage1,
@@ -2315,18 +2276,18 @@ function handleSearchResult(data, status, searchType, bounds) {
                 fillColor: '#FF1000',
                 fillOpacity: 0.3
             });
-
             circle.setMap(map);
-            setTimeout(function() {
-                circle.setMap(null);
-            }, 1000);
+            setTimeout(function() { circle.setMap(null); }, 1000);
 
             map.setLevel(3);
             map.setCenter(coords);
-        }  
-    } else {
-        // ✅ "검색 결과가 없습니다" 경고창을 제거합니다.
-        // menu_wrap 가시성은 실시간 필터링 로직이 처리합니다.
+            
+            // 검색 결과를 목록에 추가합니다.
+            var item = $('<div class="sel_txt"><span class="name"></span></div>');
+            item.find('.name').text(placeName);
+            $('#placesList').append(item);
+
+        } 
     }
 }
 </script>
