@@ -2152,6 +2152,8 @@ kakao.maps.event.addListener(marker2, 'click', function() {
                 var nameElem = items[j].getElementsByClassName("name")[0];
                 items[j].style.display = (nameElem && nameElem.innerHTML.toUpperCase().indexOf(value) > -1) ? "flex" : "none";
             }
+ 
+
         });
 
         markers.push(marker2);
@@ -2246,16 +2248,44 @@ kakao.maps.event.addListener(map, 'center_changed', function() {
 // ✅ (추가) 전역 변수로 검색 결과를 위한 마커 변수를 선언합니다.
 var searchMarker = null;
 
+// ✅ 1. 검색창에 키보드 입력(keyup)이 있을 때 실행되는 함수
+$('#keyword').on('keyup', function() {
+    var query = $(this).val().toLowerCase();
+    
+    // 목록 항목들의 가시성 상태를 변경합니다.
+    var items = document.getElementsByClassName("sel_txt");
+    var visibleItemCount = 0;
+
+    for (var j = 0; j < items.length; j++) {
+        var nameElem = items[j].getElementsByClassName("name")[0];
+        
+        // 이름에 쿼리값이 포함되는지 확인합니다.
+        var isMatch = (nameElem && nameElem.innerHTML.toLowerCase().indexOf(query) > -1);
+        
+        // 조건에 따라 항목을 보이거나 숨깁니다.
+        items[j].style.display = isMatch ? "flex" : "none";
+        
+        if (isMatch) {
+            visibleItemCount++;
+        }
+    }
+
+    // ✅ 2. 필터링이 완료된 후, 보이는 항목의 개수를 확인하여 메뉴랩을 제어합니다.
+    if (visibleItemCount > 0) {
+        $('#menu_wrap').show();
+    } else {
+        $('#menu_wrap').hide();
+    }
+});
+
+// ✅ 3. 카카오맵 API의 검색 결과를 처리하는 함수는 기존대로 유지합니다.
+// 이 함수는 '지도 마커'와 '원'을 처리하는 역할만 담당합니다.
 function handleSearchResult(data, status, searchType, bounds) {
     if (status === kakao.maps.services.Status.OK) {
-        // ✅ (수정) 기존의 검색 마커가 있다면 지도에서 제거합니다.
         if (searchMarker) {
             searchMarker.setMap(null);
         }
 
-        // 검색 결과가 있으면 menu_wrap을 보여줍니다.
-        $('#menu_wrap').show();
-        
         var coords;
         if (searchType === 'address') {
             coords = new kakao.maps.LatLng(data[0].y, data[0].x);
@@ -2264,7 +2294,6 @@ function handleSearchResult(data, status, searchType, bounds) {
         }
 
         if (bounds.contain(coords)) {
-            // ✅ (수정) 새로운 검색 마커를 생성하고 searchMarker 변수에 할당합니다.
             searchMarker = new kakao.maps.Marker({
                 map: map,
                 image: markerImage1,
@@ -2289,19 +2318,8 @@ function handleSearchResult(data, status, searchType, bounds) {
 
             map.setLevel(3);
             map.setCenter(coords);
-            
-            // ✅ (삭제) markers 배열에 추가하는 코드는 삭제합니다.
-            // markers.push(marker);
-        } else {
-            alert("검색 결과가 설정한 지역 내에 없습니다.");
-            $('#menu_wrap').hide();
-        }
-
-    } else {
-        // 검색 실패 시에도 기존 마커는 남겨둡니다.
-        $('#menu_wrap').hide();
-        alert("검색 결과가 없습니다.");
-    }
+        }  
+    } 
 }
 </script>
 
