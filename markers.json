@@ -1,4 +1,4 @@
-
+[
   
   { content: '<div>도-001-산인신당고개(회전)</div>', latlng: new kakao.maps.LatLng(35.2643129874132,128.489259058209) },
 { content: '<div>도-002-가야함안중앞01</div>', latlng: new kakao.maps.LatLng(35.2833312506004,128.402859093824) },
@@ -1673,3 +1673,4 @@
 { content: '<div>차-S33-칠원소목마을_칠원방향</div>', latlng: new kakao.maps.LatLng(35.3185717406745,128.56788106383), markerImage: new daum.maps.MarkerImage('https://raw.githubusercontent.com/kang-chan/hamancctv2/main/ymark.png', imageSize = new kakao.maps.Size(40, 42)) },
 { content: '<div>차-R31-함안대산리_함안방향</div>', latlng: new kakao.maps.LatLng(35.2487976403339,128.43632340181), markerImage: new daum.maps.MarkerImage('https://raw.githubusercontent.com/kang-chan/hamancctv2/main/ymark.png', imageSize = new kakao.maps.Size(40, 42)) },
 { content: '<div>차-R32-함안대산리_입곡방향</div>', latlng: new kakao.maps.LatLng(35.2487976403339,128.43632340181), markerImage: new daum.maps.MarkerImage('https://raw.githubusercontent.com/kang-chan/hamancctv2/main/ymark.png', imageSize = new kakao.maps.Size(40, 42)) }
+]
