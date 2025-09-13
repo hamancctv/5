@@ -2027,25 +2027,41 @@ var positions = [
 { content: '차-S33-칠원소목마을_칠원방향', latlng: new kakao.maps.LatLng(35.3185717406745,128.56788106383) },
 { content: '차-R31-함안대산리_함안방향', latlng: new kakao.maps.LatLng(35.2487976403339,128.43632340181) },
 { content: '차-R32-함안대산리_입곡방향', latlng: new kakao.maps.LatLng(35.2487976403339,128.43632340181) },
-
 ];
+  
+  var unique = {};
+var filtered = [];
+
+for (var i = 0; i < positions.length; i++) {
+  var lat = positions[i].latlng.getLat();
+  var lng = positions[i].latlng.getLng();
+  var key = lat + ',' + lng;
+
+  if (!unique[key]) {
+    unique[key] = true;
+    filtered.push(positions[i]); // 대표 마커만 저장
+  }
+}
+    
+    
+    
     
 var markers = [];
 var overlays = [];       // hover용
 var clickOverlays = [];  // 클릭용
 var markerHeight = 42;   // 마커 이미지 높이(px)
 
-for (var i = 0; i < positions.length; i++) {
+for (var i = 0; i < filtered.length; i++) {
     (function(i) {
         var marker = new kakao.maps.Marker({
             map: map,
-            position: positions[i].latlng,
-            image: positions[i].markerImage
+            position: filtered[i].latlng,
+            image: filtered[i].markerImage
         });
 
         // hover용 overlay
         var overlay = new kakao.maps.CustomOverlay({
-            position: positions[i].latlng,
+            position: filtered[i].latlng,
             content: `<div style="
                 padding:2px 6px;
                 background:rgba(255,255,255,0.9);
@@ -2055,14 +2071,14 @@ for (var i = 0; i < positions.length; i++) {
                 white-space: nowrap;
                 transform: translateY(-${markerHeight}px);
                 user-select: none;
-            ">${positions[i].content}</div>`,
+            ">${filtered[i].content}</div>`,
             yAnchor: 1,
             map: null
         });
 
         // 클릭용 overlay
         var clickOverlay = new kakao.maps.CustomOverlay({
-            position: positions[i].latlng,
+            position: filtered[i].latlng,
             content: `<div style="
                 padding:5px 8px;
                 background:rgba(255,255,255,0.95);
@@ -2072,7 +2088,7 @@ for (var i = 0; i < positions.length; i++) {
                 white-space: nowrap;
                 transform: translateY(-${markerHeight}px);
                 user-select: none;
-            ">${positions[i].content}</div>`,
+            ">${filtered[i].content}</div>`,
             yAnchor: 1,
             map: null
         });
@@ -2093,7 +2109,7 @@ for (var i = 0; i < positions.length; i++) {
             clickOverlays.push(clickOverlay);
 
             // sel_txt 필터링
-            var value = positions[i].content.substring(0,5).toUpperCase();
+            var value = filtered[i].content.substring(0,5).toUpperCase();
             var items = document.getElementsByClassName("sel_txt");
             for(var j=0; j<items.length; j++){
                 var nameElem = items[j].getElementsByClassName("name")[0];
