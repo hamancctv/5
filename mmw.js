@@ -560,383 +560,173 @@ function viewKind(mKind) {
 
 
 
-//////////////////
+/////////거리 면적 반경 측정/////////
 
-var clickHandlerRule;
-var mousemoveHandlerRule;
-var rightclickHandlerRule;
+let drawMode = null; // "line", "poly", "circle"
+let mapClickListener, mapMoveListener, mapRightClickListener;
 
-var drawingFlagCir = false; // 원이 그려지고 있는 상태를 가지고 있을 변수입니다
-var centerPosition; // 원의 중심좌표 입니다
-var drawingCircle; // 그려지고 있는 원을 표시할 원 객체입니다
-var drawingLineC; // 그려지고 있는 원의 반지름을 표시할 선 객체입니다
-var drawingOverlay; // 그려지고 있는 원의 반경을 표시할 커스텀오버레이 입니다
-var drawingDot; // 그려지고 있는 원의 중심점을 표시할 커스텀오버레이 입니다
+// ---------------- 도형 저장 ----------------
+let lineData = { clickLine:null, moveLine:null, dots:[] };
+let polyData = { polygon:null, drawingPolygon:null, areaOverlay:null };
+let circleData = { drawingCircle:null, drawingLine:null, drawingOverlay:null, circles:[], center:null };
 
-var circles = []; // 클릭으로 그려진 원과 반경 정보를 표시하는 선과 커스텀오버레이를 가지고 있을 배열입니다
+// ---------------- 공통 초기화 ----------------
+function clearAll() {
+    // 이벤트 제거
+    if (mapClickListener) kakao.maps.event.removeListener(map, 'click', mapClickListener);
+    if (mapMoveListener) kakao.maps.event.removeListener(map, 'mousemove', mapMoveListener);
+    if (mapRightClickListener) kakao.maps.event.removeListener(map, 'rightclick', mapRightClickListener);
 
+    // 거리
+    if (lineData.clickLine) lineData.clickLine.setMap(null);
+    if (lineData.moveLine) lineData.moveLine.setMap(null);
+    lineData.dots.forEach(d => { if(d.circle) d.circle.setMap(null); if(d.distance) d.distance.setMap(null); });
+    lineData = { clickLine:null, moveLine:null, dots:[] };
 
-var drawingFlagLine = false; // 선이 그려지고 있는 상태를 가지고 있을 변수입니다
-var moveLine; // 선이 그려지고 있을때 마우스 움직임에 따라 그려질 선 객체 입니다
-var clickLine // 마우스로 클릭한 좌표로 그려질 선 객체입니다
-var distanceOverlay; // 선의 거리정보를 표시할 커스텀오버레이 입니다
-var dots = {}; // 선이 그려지고 있을때 클릭할 때마다 클릭 지점과 거리를 표시하는 커스텀 오버레이 배열입니다.
+    // 면적
+    if (polyData.polygon) polyData.polygon.setMap(null);
+    if (polyData.drawingPolygon) polyData.drawingPolygon.setMap(null);
+    if (polyData.areaOverlay) polyData.areaOverlay.setMap(null);
+    polyData = { polygon:null, drawingPolygon:null, areaOverlay:null };
 
+    // 원
+    if (circleData.drawingCircle) circleData.drawingCircle.setMap(null);
+    if (circleData.drawingLine) circleData.drawingLine.setMap(null);
+    if (circleData.drawingOverlay) circleData.drawingOverlay.setMap(null);
+    circleData.circles.forEach(c => { c.circle.setMap(null); c.polyline.setMap(null); c.overlay.setMap(null); });
+    circleData = { drawingCircle:null, drawingLine:null, drawingOverlay:null, circles:[], center:null };
 
-var drawingFlagPoly = false; // 다각형이 그려지고 있는 상태를 가지고 있을 변수입니다
-var drawingPolygon; // 그려지고 있는 다각형을 표시할 다각형 객체입니다
-var polygon; // 그리기가 종료됐을 때 지도에 표시할 다각형 객체입니다
-var areaOverlay; // 다각형의 면적정보를 표시할 커스텀오버레이 입니다
-
-
-function rule_circle()
-{
-
-        setRuleClear();
-
-        // 지도에 클릭 이벤트를 등록합니다
-
-        clickHandlerRule = function(mouseEvent) {   
-            // 클릭 이벤트가 발생했을 때 원을 그리고 있는 상태가 아니면 중심좌표를 클릭한 지점으로 설정합니다
-            if (!drawingFlagCir) {    
-                removeCircles();
-                // 상태를 그리고있는 상태로 변경합니다
-                drawingFlagCir = true; 
-                
-                // 원이 그려질 중심좌표를 클릭한 위치로 설정합니다 
-                centerPosition = mouseEvent.latLng; 
-
-                // 그려지고 있는 원의 반경을 표시할 선 객체를 생성합니다
-                if (!drawingLineC) {
-                    drawingLineC = new kakao.maps.Polyline({
-                        strokeWeight: 3, // 선의 두께입니다
-                        strokeColor: '#00a0e9', // 선의 색깔입니다
-                        strokeOpacity: 1, // 선의 불투명도입니다 0에서 1 사이값이며 0에 가까울수록 투명합니다
-                        strokeStyle: 'solid' // 선의 스타일입니다
-                    });    
-                }
-                
-                // 그려지고 있는 원을 표시할 원 객체를 생성합니다
-                if (!drawingCircle) {                    
-                    drawingCircle = new kakao.maps.Circle({ 
-                        strokeWeight: 1, // 선의 두께입니다
-                        strokeColor: '#00a0e9', // 선의 색깔입니다
-                        strokeOpacity: 0.1, // 선의 불투명도입니다 0에서 1 사이값이며 0에 가까울수록 투명합니다
-                        strokeStyle: 'solid', // 선의 스타일입니다
-                        fillColor: '#00a0e9', // 채우기 색깔입니다
-                        fillOpacity: 0.2 // 채우기 불투명도입니다 
-                    });     
-                }
-                
-                // 그려지고 있는 원의 반경 정보를 표시할 커스텀오버레이를 생성합니다
-                if (!drawingOverlay) {
-                    drawingOverlay = new kakao.maps.CustomOverlay({
-                        xAnchor: 0,
-                        yAnchor: 0,
-                        zIndex: 1
-                    });              
-                }
-            }
-        }
-            
-        kakao.maps.event.addListener(map, 'click', clickHandlerRule);
-
-        // 지도에 마우스무브 이벤트를 등록합니다
-        // 원을 그리고있는 상태에서 마우스무브 이벤트가 발생하면 그려질 원의 위치와 반경정보를 동적으로 보여주도록 합니다
-        kakao.maps.event.addListener(map, 'mousemove', function (mouseEvent) {
-                
-            // 마우스무브 이벤트가 발생했을 때 원을 그리고있는 상태이면
-            if (drawingFlagCir) {
-
-                // 마우스 커서의 현재 위치를 얻어옵니다 
-                var mousePosition = mouseEvent.latLng; 
-                
-                // 그려지고 있는 선을 표시할 좌표 배열입니다. 클릭한 중심좌표와 마우스커서의 위치로 설정합니다
-                var linePath = [centerPosition, mousePosition];     
-                
-                // 그려지고 있는 선을 표시할 선 객체에 좌표 배열을 설정합니다
-                drawingLineC.setPath(linePath);
-                
-                // 원의 반지름을 선 객체를 이용해서 얻어옵니다 
-                var length = drawingLineC.getLength();
-                
-                if(length > 0) {
-                    
-                    // 그려지고 있는 원의 중심좌표와 반지름입니다
-                    var circleOptions = { 
-                        center : centerPosition, 
-                    radius: length,                 
-                    };
-                    
-                    // 그려지고 있는 원의 옵션을 설정합니다
-                    drawingCircle.setOptions(circleOptions); 
-                        
-                    // 반경 정보를 표시할 커스텀오버레이의 내용입니다
-                    var radius = Math.round(drawingCircle.getRadius()),   
-                    content = '<div class="info">반경 <span class="number">' + radius + '</span>m</div>';
-                    
-                    // 반경 정보를 표시할 커스텀 오버레이의 좌표를 마우스커서 위치로 설정합니다
-                    drawingOverlay.setPosition(mousePosition);
-                    
-                    // 반경 정보를 표시할 커스텀 오버레이의 표시할 내용을 설정합니다
-                    drawingOverlay.setContent(content);
-                    
-                    // 그려지고 있는 원을 지도에 표시합니다
-                    drawingCircle.setMap(map); 
-                    
-                    // 그려지고 있는 선을 지도에 표시합니다
-                    drawingLineC.setMap(map);  
-                    
-                    // 그려지고 있는 원의 반경정보 커스텀 오버레이를 지도에 표시합니다
-                    drawingOverlay.setMap(map);
-                    
-                } else { 
-                    
-                    drawingCircle.setMap(null);
-                    drawingLineC.setMap(null);    
-                    drawingOverlay.setMap(null);
-                    
-                }
-            }     
-        });     
-
-        // 지도에 마우스 오른쪽 클릭이벤트를 등록합니다
-        // 원을 그리고있는 상태에서 마우스 오른쪽 클릭 이벤트가 발생하면
-        // 마우스 오른쪽 클릭한 위치를 기준으로 원과 원의 반경정보를 표시하는 선과 커스텀 오버레이를 표시하고 그리기를 종료합니다
-        rightclickHandlerRule = function(mouseEvent) {    
-            if (drawingFlagCir) {
-
-            // 마우스로 오른쪽 클릭한 위치입니다 
-            var rClickPosition = mouseEvent.latLng; 
-
-            // 원의 반경을 표시할 선 객체를 생성합니다
-            var polyline = new kakao.maps.Polyline({
-                path: [centerPosition, rClickPosition], // 선을 구성하는 좌표 배열입니다. 원의 중심좌표와 클릭한 위치로 설정합니다
-                strokeWeight: 3, // 선의 두께 입니다
-                strokeColor: '#00a0e9', // 선의 색깔입니다
-                strokeOpacity: 1, // 선의 불투명도입니다 0에서 1 사이값이며 0에 가까울수록 투명합니다
-                strokeStyle: 'solid' // 선의 스타일입니다
-            });
-
-            // 원 객체를 생성합니다
-            var circle = new kakao.maps.Circle({ 
-                center : centerPosition, // 원의 중심좌표입니다
-                radius: polyline.getLength(), // 원의 반지름입니다 m 단위 이며 선 객체를 이용해서 얻어옵니다
-                strokeWeight: 1, // 선의 두께입니다
-                strokeColor: '#00a0e9', // 선의 색깔입니다
-                strokeOpacity: 0.1, // 선의 불투명도입니다 0에서 1 사이값이며 0에 가까울수록 투명합니다
-                strokeStyle: 'solid', // 선의 스타일입니다
-                fillColor: '#00a0e9', // 채우기 색깔입니다
-                fillOpacity: 0.2  // 채우기 불투명도입니다 
-            });
-
-            var radius = Math.round(circle.getRadius()), // 원의 반경 정보를 얻어옵니다
-                content = getTimeHTML(radius); // 커스텀 오버레이에 표시할 반경 정보입니다
-
-
-            // 반경정보를 표시할 커스텀 오버레이를 생성합니다
-            var radiusOverlay = new kakao.maps.CustomOverlay({
-                content: content, // 표시할 내용입니다
-                position: rClickPosition, // 표시할 위치입니다. 클릭한 위치로 설정합니다
-                xAnchor: 0,
-                yAnchor: 0,
-                zIndex: 1 
-            });  
-
-            // 원을 지도에 표시합니다
-            circle.setMap(map); 
-
-            // 선을 지도에 표시합니다
-            polyline.setMap(map);
-
-            // 반경 정보 커스텀 오버레이를 지도에 표시합니다
-            radiusOverlay.setMap(map);
-
-            // 배열에 담을 객체입니다. 원, 선, 커스텀오버레이 객체를 가지고 있습니다
-            var radiusObj = {
-                'polyline' : polyline,
-                'circle' : circle,
-                'overlay' : radiusOverlay
-            };
-
-            // 배열에 추가합니다
-            // 이 배열을 이용해서 "모두 지우기" 버튼을 클릭했을 때 지도에 그려진 원, 선, 커스텀오버레이들을 지웁니다
-            circles.push(radiusObj);   
-
-            // 그리기 상태를 그리고 있지 않는 상태로 바꿉니다
-            drawingFlagCir = false;
-                // 그리기 실행종료
-                setRuleClear();
-
-            // 중심 좌표를 초기화 합니다  
-            centerPosition = null;
-
-            // 그려지고 있는 원, 선, 커스텀오버레이를 지도에서 제거합니다
-            drawingCircle.setMap(null);
-            drawingLineC.setMap(null);   
-            drawingOverlay.setMap(null);
-            drawingFlagCir = false;
-
-
-            }
-            
-        }   
-        kakao.maps.event.addListener(map, 'rightclick', rightclickHandlerRule);
-            
-        // 지도에 표시되어 있는 모든 원과 반경정보를 표시하는 선, 커스텀 오버레이를 지도에서 제거합니다
-        function removeCircles() {         
-            for (var i = 0; i < circles.length; i++) {
-                circles[i].circle.setMap(null);    
-                circles[i].polyline.setMap(null);
-                circles[i].overlay.setMap(null);
-            }         
-            circles = [];
-        }
-
-        // 마우스 우클릭 하여 원 그리기가 종료됐을 때 호출하여 
-        // 그려진 원의 반경 정보와 반경에 대한 도보, 자전거 시간을 계산하여
-        // HTML Content를 만들어 리턴하는 함수입니다
-        function getTimeHTML(distance) {
-
-            // 도보의 시속은 평균 4km/h 이고 도보의 분속은 67m/min입니다
-            var walkkTime = distance / 67 | 0;
-            var walkHour = '', walkMin = '';
-
-            // 계산한 도보 시간이 60분 보다 크면 시간으로 표시합니다
-            if (walkkTime > 60) {
-                walkHour = '<span class="number">' + Math.floor(walkkTime / 60) + '</span>시간 '
-            }
-            walkMin = '<span class="number">' + walkkTime % 60 + '</span>분'
-
-            // 자전거의 평균 시속은 16km/h 이고 이것을 기준으로 자전거의 분속은 267m/min입니다
-            var bycicleTime = distance / 227 | 0;
-            var bycicleHour = '', bycicleMin = '';
-
-            // 계산한 자전거 시간이 60분 보다 크면 시간으로 표출합니다
-            if (bycicleTime > 60) {
-                bycicleHour = '<span class="number">' + Math.floor(bycicleTime / 60) + '</span>시간 '
-            }
-            bycicleMin = '<span class="number">' + bycicleTime % 60 + '</span>분'
-
-            // 거리와 도보 시간, 자전거 시간을 가지고 HTML Content를 만들어 리턴합니다
-            var content = '<ul class="info">';
-            content += '        <span>총거리</span><span class="number">' + distance + '</span>m';
-            content += '        <span >도보</span>' + walkHour + walkMin;
-            content += '        <span >자전거</span>' + bycicleHour + bycicleMin;
-            content += '</ul>'
-
-            return content;
-        }
-
+    drawMode = null;
 }
 
-function rule_line() {
-    setRuleClear();
+// ---------------- 거리 ----------------
+function startLineMode() {
+    drawMode = 'line';
+    let drawing = false;
 
-    // 상태 초기화
-    drawingFlagLine = false;
-    clickLine = null;
-    moveLine = null;
-    distanceOverlay = null;
-    dots = [];
-
-    // 지도 클릭 이벤트
-    clickHandlerRule = function(mouseEvent) {
-        var clickPosition = mouseEvent.latLng;
-
-        if (!drawingFlagLine) {
-            drawingFlagLine = true;
-
-            // 기존 선과 오버레이 제거
-            if (clickLine) clickLine.setMap(null);
-            if (distanceOverlay) distanceOverlay.setMap(null);
-            dots.forEach(function(dot){ if(dot.overlay) dot.overlay.setMap(null); });
-            dots = [];
-
-            // 새로운 선 생성
-            clickLine = new kakao.maps.Polyline({
-                map: map,
-                path: [clickPosition],
-                strokeWeight: 3,
-                strokeColor: '#db4040',
-                strokeOpacity: 1,
-                strokeStyle: 'solid'
-            });
-
-            // 이동 표시용 선
-            moveLine = new kakao.maps.Polyline({
-                strokeWeight: 3,
-                strokeColor: '#db4040',
-                strokeOpacity: 0.5,
-                strokeStyle: 'solid'
-            });
-
-            displayCircleDot(clickPosition, 0);
-
+    mapClickListener = function(mouseEvent) {
+        const pos = mouseEvent.latLng;
+        if (!drawing) {
+            drawing = true;
+            clearAll();
+            lineData.clickLine = new kakao.maps.Polyline({ map, path:[pos], strokeWeight:3, strokeColor:'#db4040', strokeOpacity:1, strokeStyle:'solid' });
+            lineData.moveLine = new kakao.maps.Polyline({ strokeWeight:3, strokeColor:'#db4040', strokeOpacity:0.5 });
+            addDot(pos, 0);
         } else {
-            var path = clickLine.getPath();
-            path.push(clickPosition);
-            clickLine.setPath(path);
-
-            var distance = Math.round(clickLine.getLength());
-            displayCircleDot(clickPosition, distance);
+            let path = lineData.clickLine.getPath(); path.push(pos); lineData.clickLine.setPath(path);
+            addDot(pos, Math.round(lineData.clickLine.getLength()));
         }
     };
-    kakao.maps.event.addListener(map, 'click', clickHandlerRule);
 
-    // 마우스 이동 이벤트
-    mousemoveHandlerRule = function(mouseEvent) {
-        if (drawingFlagLine && clickLine) {
-            var path = clickLine.getPath();
-            var lastPos = path[path.length - 1];
-            var mousePos = mouseEvent.latLng;
-            moveLine.setPath([lastPos, mousePos]);
-            moveLine.setMap(map);
-
-            var distance = Math.round(clickLine.getLength() + moveLine.getLength());
-            var content = '<div class="dotOverlay distanceInfo">총거리 <span class="number">' + distance + '</span>m</div>';
-            showDistance(content, mousePos);
-        }
+    mapMoveListener = function(mouseEvent) {
+        if (!drawing) return;
+        const pos = mouseEvent.latLng;
+        let path = lineData.clickLine.getPath();
+        lineData.moveLine.setPath([path[path.length-1], pos]); lineData.moveLine.setMap(map);
+        showDistance(Math.round(lineData.clickLine.getLength() + lineData.moveLine.getLength()), pos);
     };
-    kakao.maps.event.addListener(map, 'mousemove', mousemoveHandlerRule);
 
-    // 우클릭 종료
-    rightclickHandlerRule = function(mouseEvent) {
-        if (drawingFlagLine && clickLine) {
-            if (moveLine) { moveLine.setMap(null); moveLine = null; }
+    mapRightClickListener = function() { drawing=false; if(lineData.moveLine){lineData.moveLine.setMap(null); lineData.moveLine=null;} };
 
-            var path = clickLine.getPath();
-            if (path.length > 1) {
-                var distance = Math.round(clickLine.getLength());
-                var content = getTimeHTML(distance);
-                showDistance(content, path[path.length-1]);
-            } else {
-                deleteClickLine();
-                deleteCircleDot();
-                deleteDistanceOverlay();
-            }
+    kakao.maps.event.addListener(map, 'click', mapClickListener);
+    kakao.maps.event.addListener(map, 'mousemove', mapMoveListener);
+    kakao.maps.event.addListener(map, 'rightclick', mapRightClickListener);
 
-            drawingFlagLine = false;
-            setRuleClear();
-        }
-    };
-    kakao.maps.event.addListener(map, 'rightclick', rightclickHandlerRule);
-
-    // ===== 내부 함수 =====
-    function deleteClickLine() {
-        if (clickLine) { clickLine.setMap(null); clickLine = null; }
+    function addDot(position, distance) {
+        const circle = new kakao.maps.CustomOverlay({ content:'<span class="dot"></span>', position, zIndex:1 }); circle.setMap(map);
+        let distanceOverlay = null;
+        if(distance>0){ distanceOverlay = new kakao.maps.CustomOverlay({ content:`<div class="dotOverlay">거리 <span class="number">${distance}</span>m</div>`, position, yAnchor:1, zIndex:2 }); distanceOverlay.setMap(map); }
+        lineData.dots.push({circle, distance:distanceOverlay});
     }
 
-    function deleteDistanceOverlay() {
-        if (distanceOverlay) { distanceOverlay.setMap(null); distanceOverlay = null; }
-    }
-
-    function showDistance(content, position) {
-        if (!distanceOverlay) {
-            distanceOverlay = new kakao.maps.CustomOverlay({ map: map });
-        }
-        distanceOverlay.setContent(content);
-        distanceOverlay.setPosition(position);
+    function showDistance(distance, position) {
+        const content = `<div class="dotOverlay distanceInfo">총거리 <span class="number">${distance}</span>m</div>`;
+        if (!lineData.distanceOverlay) lineData.distanceOverlay = new kakao.maps.CustomOverlay({ map, content, position, xAnchor:0, yAnchor:0, zIndex:3 });
+        else { lineData.distanceOverlay.setContent(content); lineData.distanceOverlay.setPosition(position); }
     }
 }
 
+// ---------------- 면적 ----------------
+function startPolyMode() {
+    drawMode = 'poly';
+    let drawing=false;
+
+    mapClickListener = function(mouseEvent) {
+        const pos = mouseEvent.latLng;
+        if(!drawing){
+            drawing=true; clearAll();
+            polyData.drawingPolygon = new kakao.maps.Polygon({ map, path:[pos], strokeWeight:3, strokeColor:'#00a0e9', strokeOpacity:1, strokeStyle:'solid', fillColor:'#00a0e9', fillOpacity:0.2 });
+            polyData.polygon = new kakao.maps.Polygon({ path:[pos], strokeWeight:3, strokeColor:'#00a0e9', strokeOpacity:1, strokeStyle:'solid', fillColor:'#00a0e9', fillOpacity:0.2 });
+        } else {
+            let path = polyData.drawingPolygon.getPath(); path.push(pos); polyData.drawingPolygon.setPath(path);
+            let path2 = polyData.polygon.getPath(); path2.push(pos); polyData.polygon.setPath(path2);
+        }
+    };
+
+    mapMoveListener = function(mouseEvent){
+        if(!drawing) return;
+        const pos = mouseEvent.latLng;
+        let path = polyData.drawingPolygon.getPath(); if(path.length>1) path.pop(); path.push(pos); polyData.drawingPolygon.setPath(path);
+    };
+
+    mapRightClickListener = function() {
+        if(!drawing) return;
+        if(polyData.drawingPolygon){ polyData.drawingPolygon.setMap(null); polyData.drawingPolygon=null; }
+        let path = polyData.polygon.getPath();
+        if(path.length>2){
+            polyData.polygon.setMap(map);
+            polyData.areaOverlay = new kakao.maps.CustomOverlay({ map, content:`<div class="info">총면적 <span class="number">${Math.round(polyData.polygon.getArea())}</span> m<sup>2</sup></div>`, xAnchor:0, yAnchor:0, position:path[path.length-1] });
+        } else polyData.polygon=null;
+        drawing=false;
+    };
+
+    kakao.maps.event.addListener(map, 'click', mapClickListener);
+    kakao.maps.event.addListener(map, 'mousemove', mapMoveListener);
+    kakao.maps.event.addListener(map, 'rightclick', mapRightClickListener);
+}
+
+// ---------------- 원 ----------------
+function startCircleMode() {
+    drawMode = 'circle';
+    let drawing=false;
+
+    mapClickListener = function(mouseEvent){
+        if(!drawing){
+            drawing=true; clearAll();
+            circleData.center = mouseEvent.latLng;
+            circleData.drawingLine = new kakao.maps.Polyline({ strokeWeight:3, strokeColor:'#00a0e9', strokeOpacity:1, strokeStyle:'solid' });
+            circleData.drawingCircle = new kakao.maps.Circle({ strokeWeight:1, strokeColor:'#00a0e9', strokeOpacity:0.1, strokeStyle:'solid', fillColor:'#00a0e9', fillOpacity:0.2 });
+            circleData.drawingOverlay = new kakao.maps.CustomOverlay({ xAnchor:0, yAnchor:0, zIndex:1 });
+        }
+    };
+
+    mapMoveListener = function(mouseEvent){
+        if(!drawing) return;
+        const pos = mouseEvent.latLng;
+        circleData.drawingLine.setPath([circleData.center, pos]);
+        const radius = circleData.drawingLine.getLength();
+        if(radius>0){ circleData.drawingCircle.setOptions({ center:circleData.center, radius }); circleData.drawingOverlay.setContent(`<div class="info">반경 <span class="number">${Math.round(radius)}</span>m</div>`); circleData.drawingOverlay.setPosition(pos); circleData.drawingCircle.setMap(map); circleData.drawingLine.setMap(map); circleData.drawingOverlay.setMap(map); }
+        else { circleData.drawingCircle.setMap(null); circleData.drawingLine.setMap(null); circleData.drawingOverlay.setMap(null); }
+    };
+
+    mapRightClickListener = function(mouseEvent){
+        if(!drawing) return;
+        const pos = mouseEvent.latLng;
+        const polyline = new kakao.maps.Polyline({ path:[circleData.center,pos], strokeWeight:3, strokeColor:'#00a0e9', strokeOpacity:1, strokeStyle:'solid' });
+        const circle = new kakao.maps.Circle({ center:circleData.center, radius:polyline.getLength(), strokeWeight:1, strokeColor:'#00a0e9', strokeOpacity:0.1, strokeStyle:'solid', fillColor:'#00a0e9', fillOpacity:0.2 });
+        const overlay = new kakao.maps.CustomOverlay({ content:`<div class="info">반경 <span class="number">${Math.round(circle.getRadius())}</span>m</div>`, position:pos, xAnchor:0, yAnchor:0, zIndex:1 });
+        polyline.setMap(map); circle.setMap(map); overlay.setMap(map);
+        circleData.circles.push({polyline, circle, overlay});
+        circleData.drawingCircle.setMap(null); circleData.drawingLine.setMap(null); circleData.drawingOverlay.setMap(null); circleData.center=null; drawing=false;
+    };
+
+    kakao.maps.event.addListener(map, 'click', mapClickListener);
+    kakao.maps.event.addListener(map, 'mousemove', mapMoveListener);
+    kakao.maps.event.addListener(map, 'rightclick', mapRightClickListener);
+}
+
+// ---------------- 버튼 ----------------
+document.getElementById('btnMARKER').addEventListener('click', startLineMode);
+document.getElementById('btnPOLYLINE').addEventListener('click', startPolyMode);
+document.getElementById('btnARROW').addEventListener('click', startCircleMode);
+document.getElementById('btnReset').addEventListener('click', clearAll);
