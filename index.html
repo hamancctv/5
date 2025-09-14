@@ -10,7 +10,7 @@
     <meta charset="utf-8">
     <title>GIS 모바일</title>
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
-<script type ="text/javascript" src="https://hamancctv.github.io/hamancctv/5/main/mmw.js"> </script>
+<script type ="text/javascript" src="https://raw.githubusercontent.com/hamancctv/5/main/mmw.js"> </script>
 </head>
 
     <body>
@@ -120,7 +120,7 @@
 </div>
   <!-- 2-2. input:text 태그 -->
     <button id="btn_input_copy" style= "position:absolute;top:12;width:45;right:285;z-index:200">복사</button>
- <input type="text" inputmode="none" class='form-control' style= "position:absolute;top:13;width:270;right:10;z-index:20" id = "gpsyx" value ="35.2725308711779, 128.406307024695">
+ <input type="text" inputmode="none" class='form-control' style= "position:absolute;top:13;width:270;right:10;z-index:20" id = "gpsyx" value ="35.2725308711779, 128.406307024695"></button>
   <!-- 2-3. 토글버튼 -->
 <div id="menu_rule" class="bg_white" style="border:1px solid #919191;border-radius:5px;">   
 <button id='btnMARKER'>거리</button>
@@ -406,120 +406,6 @@ for (var i = 0; i < positions.length; i++) {
     }
 }
  
-var markers = [];
-var overlays = [];
-
-positions.forEach(function(pos) {
-    var marker = new kakao.maps.Marker({
-        position: new kakao.maps.LatLng(pos.lat, pos.lng),
-        map: map
-    });
-
-    var overlay = new kakao.maps.CustomOverlay({
-        position: marker.getPosition(),
-        content: '<div>오버레이</div>',
-        yAnchor: 1 
-    });
-
-    markers.push(marker);
-    overlays.push(overlay);
-});
-
-    // 전역 변수
-var zIndexCounter = 1;
-var zIndexMax = 10000; // 필요시 조정
-
-function bringToFront(marker, overlay) {
-    if (zIndexCounter > zIndexMax) zIndexCounter = 1;
-    zIndexCounter++;
-    marker.setZIndex(zIndexCounter);
-    if (overlay) overlay.setZIndex(zIndexCounter);
-}
-
-// 마커 생성 및 이벤트 처리
-for (var i = 0; i < filtered.length; i++) {
-    (function(i) {
-        var marker2 = new kakao.maps.Marker({
-            map: map,
-            position: filtered[i].latlng,
-            image: filtered[i].markerImage,
-            clickable: true
-        });
-
-        var overlay = new kakao.maps.CustomOverlay({
-            position: filtered[i].latlng,
-            content: `<div style="
-                pointer-events: none;
-                padding:2px 6px;
-                background:rgba(255,255,255,0.9);
-                border:1px solid #ccc;
-                border-radius:5px;
-                font-size:12px;
-                white-space: nowrap;
-                transform: translateY(-42px);
-                user-select: none;
-            ">${filtered[i].content}</div>`,
-            yAnchor: 1,
-            map: null,
-            clickable: false
-        });
-
-        var clickOverlay = new kakao.maps.CustomOverlay({
-            position: filtered[i].latlng,
-            content: `<div style="
-                pointer-events: none;
-                padding:5px 8px;
-                background:rgba(255,255,255,0.95);
-                border:1px solid #666;
-                border-radius:5px;
-                font-size:13px;
-                white-space: nowrap;
-                transform: translateY(-42px);
-                user-select: none;
-            ">${filtered[i].content}</div>`,
-            yAnchor: 1,
-            map: null,
-            clickable: false
-        });
-
-        // hover 이벤트
-        kakao.maps.event.addListener(marker2, 'mouseover', function() {
-            if(map.getLevel() > 3 && overlay.getMap() === null) overlay.setMap(map);
-            bringToFront(marker2, overlay); // z-index 위로
-        });
-        kakao.maps.event.addListener(marker2, 'mouseout', function() {
-            if(map.getLevel() > 3) setTimeout(function() {
-                if(overlay.getMap() !== null) overlay.setMap(null);
-            }, 50);
-        });
-
-        // click 이벤트
-        kakao.maps.event.addListener(marker2, 'click', function() {
-            // 기존 클릭 오버레이 제거
-            clickOverlays.forEach(function(ov) { ov.setMap(null); });
-            clickOverlays = [];
-
-            // 클릭용 overlay 표시
-            clickOverlay.setMap(map);
-            clickOverlays.push(clickOverlay);
-
-            // z-index 위로
-            bringToFront(marker2, overlay);
-
-            // 좌표 input 업데이트
-            var latlng = marker2.getPosition();
-            $('#gpsyx').val(latlng.getLat() + ', ' + latlng.getLng());
-        });
-
-        // 마커 객체에 그룹 정보 저장
-        marker2.group = filtered[i].group;
-
-        markers.push(marker2);
-        overlays.push(overlay);
-    })(i);
-}    
-        
-        
 // 마커 생성 및 이벤트 리스너 추가 로직
 var markers = [];
 var overlays = [];
@@ -540,7 +426,6 @@ for (var i = 0; i < filtered.length; i++) {
         var overlay = new kakao.maps.CustomOverlay({
             position: filtered[i].latlng,
             content: `<div style="
-        pointer-events: none;  /* 클릭 이벤트 무시 */
                 padding:2px 6px;
                 background:rgba(255,255,255,0.9);
                 border:1px solid #ccc;
@@ -559,7 +444,6 @@ for (var i = 0; i < filtered.length; i++) {
         var clickOverlay = new kakao.maps.CustomOverlay({
             position: filtered[i].latlng,
             content: `<div style="
-        pointer-events: none;  /* 클릭 이벤트 무시 */
                 padding:5px 8px;
                 background:rgba(255,255,255,0.95);
                 border:1px solid #666;
@@ -577,48 +461,36 @@ for (var i = 0; i < filtered.length; i++) {
         // hover 이벤트
         kakao.maps.event.addListener(marker2, 'mouseover', function() {
             if(map.getLevel() > 3 && overlay.getMap() === null) overlay.setMap(map);
-    this.setZIndex(999);       // 마커 최상위
-    overlay.setZIndex(1000);   // 관련 오버레이도 위로
         });
         kakao.maps.event.addListener(marker2, 'mouseout', function() {
             if(map.getLevel() > 3) setTimeout(function() {
                 if(overlay.getMap() !== null) overlay.setMap(null);
             }, 50);
-    this.setZIndex(0);         // 기본값 복원
-    overlay.setZIndex(1);      // 오버레이 기본값 복원
         });
         
         
         // 클릭 이벤트
- kakao.maps.event.addListener(marker2, 'click', function() {
-
-    // 1. 기존 클릭 오버레이 제거
-    clickOverlays.forEach(function(ov) { ov.setMap(null); });
+    // 클릭 이벤트
+kakao.maps.event.addListener(marker2, 'click', function() {
+    // 기존 오버레이 모두 제거
+    clickOverlays.forEach(function(ov) {
+        ov.setMap(null);
+    });
     clickOverlays = [];
 
-    // 2. 클릭한 마커 index 찾기
-    var index = markers.indexOf(marker2);
-    var hoverOverlay = overlays[index]; // 클릭한 마커의 overlay
-
-    // 3. 모든 마커와 overlay zIndex 초기화
-    markers.forEach(function(m) { m.setZIndex(0); });
-    overlays.forEach(function(o) { o.setZIndex(1); });
-
-    // 4. 클릭한 마커와 overlay 최상위
-    marker2.setZIndex(999);
-    hoverOverlay.setZIndex(1000);
-
-    // 5. 클릭용 overlay 표시
-    clickOverlay.setMap(map);
-    clickOverlays.push(clickOverlay);
-
-    // 6. 그룹 폴리라인 처리
-    if (polyline) polyline.setMap(null);
+    // 클릭한 마커의 그룹 확인
     var group = marker2.group;
+
+    // 그룹이 있는 경우만 선을 그림
     if (group) {
+        // 기존 폴리라인 제거
+        if (polyline) polyline.setMap(null);
+
+        // 같은 그룹 마커 위치만 모음
         var linePath = markers
             .filter(m => m.group === group)
             .map(m => m.getPosition());
+
         if (linePath.length > 1) {
             polyline = new kakao.maps.Polyline({
                 path: linePath,
@@ -629,38 +501,57 @@ for (var i = 0; i < filtered.length; i++) {
             });
             polyline.setMap(map);
         }
+    } else {
+        if (polyline) polyline.setMap(null);
     }
+    
+    
+            
+            // 2. 바운스 효과 및 오버레이 표시
+            var originalPosition = filtered[i].latlng;
+            var offset = 0;
+            var direction = 1;
+            var bounceDuration = 400;
 
-    // 7. 클릭 시 bounce 효과
-    var originalPosition = filtered[i].latlng;
-    var offset = 0;
-    var direction = 1;
-    var bounceDuration = 400;
+            if (marker2.bounceInterval) {
+                clearInterval(marker2.bounceInterval);
+            }
 
-    if (marker2.bounceInterval) clearInterval(marker2.bounceInterval);
+            marker2.bounceInterval = setInterval(function() {
+                offset += direction * 0.5;
+                if (offset >= 5 || offset <= -5) {
+                    direction *= -1;
+                }
+                var bouncePosition = new kakao.maps.LatLng(
+                    originalPosition.getLat(),
+                    originalPosition.getLng() + (offset / 100000)
+                );
+                marker2.setPosition(bouncePosition);
+            }, 10);
 
-    marker2.bounceInterval = setInterval(function() {
-        offset += direction * 0.5;
-        if (offset >= 5 || offset <= -5) direction *= -1;
-        var bouncePosition = new kakao.maps.LatLng(
-            originalPosition.getLat(),
-            originalPosition.getLng() + (offset / 100000)
-        );
-        marker2.setPosition(bouncePosition);
-    }, 10);
+            setTimeout(function() {
+                clearInterval(marker2.bounceInterval);
+                marker2.setPosition(originalPosition);
+            }, bounceDuration);
 
-    setTimeout(function() {
-        clearInterval(marker2.bounceInterval);
-        marker2.setPosition(originalPosition);
-    }, bounceDuration);
+            clickOverlay.setMap(map);
+            clickOverlays.push(clickOverlay);
 
-    // 8. 좌표 input 업데이트
-    var latlng = marker2.getPosition();
+            // sel_txt 필터링 (기존 로직 유지)
+            // filtered[i].content를 사용하도록 수정
+            var value = filtered[i].content.substring(0, 5).toUpperCase();
+            var items = document.getElementsByClassName("sel_txt");
+            for (var j = 0; j < items.length; j++) {
+                var nameElem = items[j].getElementsByClassName("name")[0];
+                items[j].style.display = (nameElem && nameElem.innerHTML.toUpperCase().indexOf(value) > -1) ? "flex" : "none";
+            }
+            
+                            // 클릭한 위도, 경도 정보를 가져옵니다
+  var latlng = marker2.getPosition();
+    // input에 좌표 넣기
     $('#gpsyx').val(latlng.getLat() + ', ' + latlng.getLng());
-});
-        
-        
-        
+        });
+
         // 마커 객체에 그룹 정보 저장
         marker2.group = filtered[i].group;
         markers.push(marker2);
@@ -834,7 +725,7 @@ kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
         <button id='btnARROW'  onclick="rule_circle()">반경</button>    
         <button class='berror' onclick="RulerRemove()">초기화</button></div>
 
-    <!-- sel_txt 시작 -->
+    // sel_txt 시작
 <div id="menu_wrap" class="bg_white" style="border:1px solid #919191;border-radius:10px;">
     // 이 사이에 내용 호출
     </div>
