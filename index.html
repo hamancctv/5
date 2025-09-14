@@ -425,6 +425,101 @@ positions.forEach(function(pos) {
     overlays.push(overlay);
 });
 
+    // 전역 변수
+var zIndexCounter = 1;
+var zIndexMax = 10000; // 필요시 조정
+
+function bringToFront(marker, overlay) {
+    if (zIndexCounter > zIndexMax) zIndexCounter = 1;
+    zIndexCounter++;
+    marker.setZIndex(zIndexCounter);
+    if (overlay) overlay.setZIndex(zIndexCounter);
+}
+
+// 마커 생성 및 이벤트 처리
+for (var i = 0; i < filtered.length; i++) {
+    (function(i) {
+        var marker2 = new kakao.maps.Marker({
+            map: map,
+            position: filtered[i].latlng,
+            image: filtered[i].markerImage,
+            clickable: true
+        });
+
+        var overlay = new kakao.maps.CustomOverlay({
+            position: filtered[i].latlng,
+            content: `<div style="
+                pointer-events: none;
+                padding:2px 6px;
+                background:rgba(255,255,255,0.9);
+                border:1px solid #ccc;
+                border-radius:5px;
+                font-size:12px;
+                white-space: nowrap;
+                transform: translateY(-42px);
+                user-select: none;
+            ">${filtered[i].content}</div>`,
+            yAnchor: 1,
+            map: null,
+            clickable: false
+        });
+
+        var clickOverlay = new kakao.maps.CustomOverlay({
+            position: filtered[i].latlng,
+            content: `<div style="
+                pointer-events: none;
+                padding:5px 8px;
+                background:rgba(255,255,255,0.95);
+                border:1px solid #666;
+                border-radius:5px;
+                font-size:13px;
+                white-space: nowrap;
+                transform: translateY(-42px);
+                user-select: none;
+            ">${filtered[i].content}</div>`,
+            yAnchor: 1,
+            map: null,
+            clickable: false
+        });
+
+        // hover 이벤트
+        kakao.maps.event.addListener(marker2, 'mouseover', function() {
+            if(map.getLevel() > 3 && overlay.getMap() === null) overlay.setMap(map);
+            bringToFront(marker2, overlay); // z-index 위로
+        });
+        kakao.maps.event.addListener(marker2, 'mouseout', function() {
+            if(map.getLevel() > 3) setTimeout(function() {
+                if(overlay.getMap() !== null) overlay.setMap(null);
+            }, 50);
+        });
+
+        // click 이벤트
+        kakao.maps.event.addListener(marker2, 'click', function() {
+            // 기존 클릭 오버레이 제거
+            clickOverlays.forEach(function(ov) { ov.setMap(null); });
+            clickOverlays = [];
+
+            // 클릭용 overlay 표시
+            clickOverlay.setMap(map);
+            clickOverlays.push(clickOverlay);
+
+            // z-index 위로
+            bringToFront(marker2, overlay);
+
+            // 좌표 input 업데이트
+            var latlng = marker2.getPosition();
+            $('#gpsyx').val(latlng.getLat() + ', ' + latlng.getLng());
+        });
+
+        // 마커 객체에 그룹 정보 저장
+        marker2.group = filtered[i].group;
+
+        markers.push(marker2);
+        overlays.push(overlay);
+    })(i);
+}    
+        
+        
 // 마커 생성 및 이벤트 리스너 추가 로직
 var markers = [];
 var overlays = [];
