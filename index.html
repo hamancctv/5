@@ -1,6 +1,7 @@
 
 
 
+
 <html>
 
 <head>
@@ -756,10 +757,7 @@ kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
         }
       };
     
-</script>
-  
- <script> 
-     
+
 function removeMarker() {
     for ( var i = 0; i < markers.length; i++ ) {
         markers[i].setMap(null);
@@ -774,6 +772,52 @@ function removeMarker() {
         document.execCommand('copy');
     };
 
+    // 전역 변수
+var groupPolylineMap = {}; // 그룹별로 polyline 저장
+var toggleGroupOn = false; // 토글 상태
+
+// 버튼 클릭 이벤트
+document.getElementById('toggle_group').addEventListener('click', function() {
+    toggleGroupOn = !toggleGroupOn;
+
+    if (toggleGroupOn) {
+        // 버튼 활성화 스타일 적용
+        this.classList.add('active');
+
+        // 그룹별 폴리라인 생성 (그룹 정보 없는 마커 제외)
+        var groups = {};
+        markers.forEach(function(marker) {
+            if (!marker.group) return; // 그룹 없는 마커는 제외
+            if (!groups[marker.group]) groups[marker.group] = [];
+            groups[marker.group].push(marker.getPosition());
+        });
+
+        for (var g in groups) {
+            if (groups[g].length < 2) continue; // 폴리라인 그리기 최소 2개
+            var line = new kakao.maps.Polyline({
+                path: groups[g],
+                strokeWeight: 5,
+                strokeColor: '#FF5C5C',
+                strokeOpacity: 0.7,
+                strokeStyle: 'solid'
+            });
+            line.setMap(map);
+            groupPolylineMap[g] = line; // 그룹별 저장
+        }
+
+    } else {
+        // 버튼 비활성화 스타일 제거
+        this.classList.remove('active');
+
+        // 모든 그룹 폴리라인 제거
+        for (var g in groupPolylineMap) {
+            groupPolylineMap[g].setMap(null);
+        }
+        groupPolylineMap = {};
+    }
+});
+
+    
  </script>
 
 </body>
