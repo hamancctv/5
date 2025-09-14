@@ -2133,30 +2133,36 @@ for (var i = 0; i < filtered.length; i++) {
             });
             clickOverlays = [];
 
-            // 1. 선 그리기 로직
-            if (polyline) {
-                polyline.setMap(null);
-            }
-
-            var linePath = [];
-            markers.forEach(function(m) {
-                // filtered 배열의 group 속성 사용
-                if (m.group === filtered[i].group) {
-                    linePath.push(m.getPosition());
+    // 1. 선 그리기 로직
+            // 그룹이 있는 경우에만 선을 그립니다.
+            if (filtered[i].group) {
+                if (polyline) {
+                    polyline.setMap(null);
                 }
-            });
 
-            if (linePath.length > 1) {
-                polyline = new kakao.maps.Polyline({
-                    path: linePath,
-                    strokeWeight: 5,
-                    strokeColor: '#FF5C5C',
-                    strokeOpacity: 0.7,
-                    strokeStyle: 'solid'
+                var linePath = [];
+                markers.forEach(function(m) {
+                    if (m.group === filtered[i].group) {
+                        linePath.push(m.getPosition());
+                    }
                 });
-                polyline.setMap(map);
-            }
 
+                if (linePath.length > 1) {
+                    polyline = new kakao.maps.Polyline({
+                        path: linePath,
+                        strokeWeight: 5,
+                        strokeColor: '#FF5C5C',
+                        strokeOpacity: 0.7,
+                        strokeStyle: 'solid'
+                    });
+                    polyline.setMap(map);
+                }
+            } else {
+                // 그룹이 없는 경우, 기존 선을 지우고 아무것도 그리지 않습니다.
+                if (polyline) {
+                    polyline.setMap(null);
+                }
+            }
             // 2. 바운스 효과 및 오버레이 표시
             var originalPosition = filtered[i].latlng;
             var offset = 0;
