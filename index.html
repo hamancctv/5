@@ -4,6 +4,7 @@
 
 
 
+
 <html>
 
 <head>
@@ -503,9 +504,10 @@ function startTracking(){
         map.panTo(latLng);
     }, geoError, { enableHighAccuracy:true });
 
+    // 깜빡임(토글 visibility) 제거하고 싶다면 다음 라인 주석 처리
     trackInterval = setInterval(function(){
         if(trackMarker) trackMarker.setVisible(!trackMarker.getVisible());
-    }, 1000); // 깜빡임 속도 1초
+    }, 500); // 깜빡임 속도 1초
 }
 
 function stopTracking(){
@@ -911,6 +913,7 @@ document.getElementById('toggle_group').addEventListener('click', function() {
     if (toggleGroupOn) {
         this.classList.add('active');
 
+        // 그룹별 마커 모으기
         var groups = {};
         markers.forEach(function(marker) {
             if (!marker.group || !/^[0-9\-]+$/.test(marker.group)) return; // 숫자/하이픈 아닌 그룹 제외
@@ -918,6 +921,7 @@ document.getElementById('toggle_group').addEventListener('click', function() {
             groups[marker.group].push(marker);
         });
 
+        // 그룹별로 가장 가까운 마커끼리만 연결
         for (var g in groups) {
             var groupMarkers = groups[g];
             if (groupMarkers.length < 2) continue;
@@ -943,9 +947,9 @@ document.getElementById('toggle_group').addEventListener('click', function() {
 
                     var line = new kakao.maps.Polyline({
                         path: path,
-                        strokeWeight: 3,
-                        strokeColor: '#FF0000', // 빨간색
-                        strokeOpacity: 0.8,
+                        strokeWeight: 5,
+                        strokeColor: '#FF5C5C', // 클릭 시와 동일한 색
+                        strokeOpacity: 0.7,
                         strokeStyle: 'solid'
                     });
                     line.setMap(map);
@@ -961,6 +965,7 @@ document.getElementById('toggle_group').addEventListener('click', function() {
 
     } else {
         this.classList.remove('active');
+        // 기존 라인 제거
         for (var g in groupPolylineMap) {
             groupPolylineMap[g].forEach(function(line) { line.setMap(null); });
         }
