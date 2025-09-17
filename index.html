@@ -3,6 +3,7 @@
 
 
 
+
 <html>
 
 <head>
@@ -421,118 +422,102 @@ map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPLEFT);
 
         
         // 내 위치 토글//
-var myLocationOn = false;
+  var myLocationOn = false;
 var trackOn = false;
+var myLocationMarker = null;
+var trackMarker = null;
 var trackInterval = null;
 var watchId = null;
 
-var myLocationMarker = null; // 내 위치용 마커
-var trackMarker = null;      // 추적용 마커
-
-// 마커 이미지
 var markerImage = new kakao.maps.MarkerImage(
-    "https://hamancctv.github.io/5/icon-target.png",
-    new kakao.maps.Size(30, 30),
-    {offset: new kakao.maps.Point(15, 15)}
+    'https://hamancctv.github.io/5/icon-target.png',
+    new kakao.maps.Size(32,32),
+    { offset: new kakao.maps.Point(16,16) }
 );
 
-// 내 위치 토글
+// ===== 내 위치 토글 =====
 function toggleMyLocation() {
-    var btn = document.getElementById('btnCurrentMe');
+    if(trackOn) stopTracking(); // 추적 켜져 있으면 끔
+
     if(!myLocationOn){
         myLocationOn = true;
-        trackOn = false;
-        clearTracking();
-        if(watchId) { navigator.geolocation.clearWatch(watchId); watchId = null; }
-
+        document.getElementById('btnCurrentMe').classList.add('selected_btn');
         navigator.geolocation.getCurrentPosition(function(pos){
-            var lat = pos.coords.latitude;
-            var lng = pos.coords.longitude;
-
-            if(!myLocationMarker){
-                myLocationMarker = new kakao.maps.Marker({
-                    map: map,
-                    position: new kakao.maps.LatLng(lat, lng),
-                    image: markerImage,
-                    title: "내위치",
-                    clickable: false
-                });
-            } else {
-                myLocationMarker.setPosition(new kakao.maps.LatLng(lat, lng));
-                myLocationMarker.setMap(map);
-            }
-
-            map.panTo(new kakao.maps.LatLng(lat, lng));
-        });
-
-        btn.classList.add('selected_btn');
-        document.getElementById('btnTrackMe').classList.remove('selected_btn');
+            showMyLocation(pos.coords.latitude, pos.coords.longitude);
+        }, geoError, { enableHighAccuracy:true });
     } else {
-        myLocationOn = false;
-        if(myLocationMarker) myLocationMarker.setMap(null);
-        btn.classList.remove('selected_btn');
-    }
-}
-
-// 추적 토글
-function toggleTracking() {
-    var btn = document.getElementById('btnTrackMe');
-    if(!trackOn){
-        trackOn = true;
         myLocationOn = false;
         document.getElementById('btnCurrentMe').classList.remove('selected_btn');
-        btn.classList.add('selected_btn');
-
-        clearTracking();
-        if(watchId) navigator.geolocation.clearWatch(watchId);
-
-        watchId = navigator.geolocation.watchPosition(function(pos){
-            var lat = pos.coords.latitude;
-            var lng = pos.coords.longitude;
-
-            if(!trackMarker){
-                trackMarker = new kakao.maps.Marker({
-                    map: map,
-                    position: new kakao.maps.LatLng(lat, lng),
-                    image: markerImage,
-                    title: "추적",
-                    clickable: false
-                });
-            } else {
-                trackMarker.setPosition(new kakao.maps.LatLng(lat, lng));
-                trackMarker.setMap(map);
-            }
-
-            map.panTo(new kakao.maps.LatLng(lat, lng));
-        }, function(err){
-            console.error(err);
-        }, {enableHighAccuracy: true, maximumAge: 2000, timeout: 5000});
-
-        startTracking();
-    } else {
-        trackOn = false;
-        clearTracking();
-        if(watchId) { navigator.geolocation.clearWatch(watchId); watchId = null; }
-        btn.classList.remove('selected_btn');
+        if(myLocationMarker) {
+            myLocationMarker.setMap(null);
+            myLocationMarker = null;
+        }
     }
 }
 
-// 깜빡임 시작 (추적 마커만)
+function showMyLocation(lat, lng){
+    var latLng = new kakao.maps.LatLng(lat,lng);
+    if(!myLocationMarker){
+        myLocationMarker = new kakao.maps.Marker({
+            position:latLng,
+            map:map,
+            image:markerImage
+        });
+        kakao.maps.event.addListener(myLocationMarker, 'click', function(){
+            map.panTo(myLocationMarker.getPosition());
+            map.setLevel(4);
+        });
+    } else {
+        myLocationMarker.setPosition(latLng);
+        myLocationMarker.setMap(map);
+    }
+    map.panTo(latLng);
+    map.setLevel(5);
+}
+
+// ===== 추적 토글 =====
+function toggleTracking() {
+    if(myLocationOn) toggleMyLocation(); // 내위치 켜져 있으면 끔
+
+    if(!trackOn) startTracking();
+    else stopTracking();
+}
+
 function startTracking(){
-    if(trackInterval) clearInterval(trackInterval);
+    trackOn = true;
+    document.getElementById('btnTrackMe').classList.add('selected_btn');
+
+    watchId = navigator.geolocation.watchPosition(function(pos){
+        var latLng = new kakao.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
+
+        if(!trackMarker){
+            trackMarker = new kakao.maps.Marker({
+                position:latLng,
+                map:map,
+                image:markerImage
+            });
+        } else {
+            trackMarker.setPosition(latLng);
+            trackMarker.setMap(map);
+        }
+        map.panTo(latLng);
+    }, geoError, { enableHighAccuracy:true });
+
     trackInterval = setInterval(function(){
         if(trackMarker) trackMarker.setVisible(!trackMarker.getVisible());
-    }, 500);
+    }, 1000); // 깜빡임 속도 1초
 }
 
-// 깜빡임 종료
-function clearTracking(){
-    if(trackInterval) clearInterval(trackInterval);
-    trackInterval = null;
-    if(trackMarker) trackMarker.setVisible(true);
+function stopTracking(){
+    trackOn = false;
+    document.getElementById('btnTrackMe').classList.remove('selected_btn');
+
+    if(watchId) { navigator.geolocation.clearWatch(watchId); watchId=null; }
+    if(trackInterval){ clearInterval(trackInterval); trackInterval=null; }
+    if(trackMarker){ trackMarker.setVisible(true); trackMarker.setMap(null); trackMarker=null; }
 }
 
-
+function geoError(err){ console.error('GPS error:', err); }
 
     // 중복 제거 로직
 // unique 객체에 lat, lng 뿐만 아니라 markerImage도 체크하여 완벽한 중복 제거
