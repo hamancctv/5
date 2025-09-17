@@ -5,6 +5,7 @@
 
 
 
+
 <html>
 
 <head>
@@ -21,6 +22,24 @@
     <div id="alert-message"></div>
 </div>
 		<style>
+            /* 지도 전체에서 텍스트 선택 방지 */
+#map, #map * {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -khtml-user-select: none;
+}
+
+/* 입력 가능한 영역은 선택 가능 */
+input, textarea, select {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    -khtml-user-select: text !important;
+}
+            
 #container {overflow:hidden;height:100%;position:relative;}
 #mapWrapper {width:100%;height:100%;z-index:1;}
 #rvWrapper {width:50%;height:100%;top:0;right:0;position:absolute;z-index:0;}
@@ -611,30 +630,7 @@ kakao.maps.event.addListener(marker2, 'click', function() {
     // 클릭한 마커의 그룹 확인
     var group = marker2.group;
 
-    // 그룹이 있는 경우만 선을 그림
-    if (group) {
-        // 기존 폴리라인 제거
-        if (polyline) polyline.setMap(null);
-
-        // 같은 그룹 마커 위치만 모음
-        var linePath = markers
-            .filter(m => m.group === group)
-            .map(m => m.getPosition());
-
-        if (linePath.length > 1) {
-            polyline = new kakao.maps.Polyline({
-                path: linePath,
-                strokeWeight: 5,
-                strokeColor: '#FF5C5C',
-                strokeOpacity: 0.7,
-                strokeStyle: 'solid'
-            });
-            polyline.setMap(map);
-        }
-    } else {
-        if (polyline) polyline.setMap(null);
-    }
-    
+   
     
             
             // 2. 바운스 효과 및 오버레이 표시
@@ -904,44 +900,135 @@ function removeMarker() {
 
     // 전역 변수
 // 그룹별 직선 연결
-// 그룹별 직선 연결 (숫자와 하이픈(-)만 허용)
-function drawGroupLines() {
-    var groupMarkers = {};
+// --- 거리 계산 ---
+// --- 거리 계산 ---
+function getDistance(latlng1, latlng2) {
+    var R = 6371e3;
+    var lat1 = latlng1.getLat() * Math.PI / 180;
+    var lat2 = latlng2.getLat() * Math.PI / 180;
+    var dLat = (latlng2.getLat()-latlng1.getLat())*Math.PI/180;
+    var dLng = (latlng2.getLng()-latlng1.getLng())*Math.PI/180;
+    var a = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLng/2)**2;
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
 
-    // 그룹별로 마커 모으기
-    markers.forEach(function(marker) {
-        if (!marker.group) return;
+// --- MST 토글 ---
+function drawGroupLinesMST(){
+    if(allLines.length>0){
+        allLines.forEach(l=>l.setMap(null));
+        allLines=[];
+        return;
+    }
 
-        // 그룹명이 숫자와 하이픈(-)만 있는지 체크
-        if (!/^[0-9-]+$/.test(marker.group)) return;
-
-        if (!groupMarkers[marker.group]) groupMarkers[marker.group] = [];
-        groupMarkers[marker.group].push(marker);
+    var groupMarkers={};
+    markers.forEach(m=>{
+        if(!m.group) return;
+        if(!groupMarkers[m.group]) groupMarkers[m.group]=[];
+        groupMarkers[m.group].push(m);
     });
 
-    // 그룹별로 순서대로 직선 연결
-    for (var g in groupMarkers) {
-        var path = groupMarkers[g].map(m => m.getPosition());
+    for(var g in groupMarkers){
+        var group = groupMarkers[g];
+        if(group.length<2) continue;
+        var n=group.length, selected=Array(n).fill(false), dist=Array(n).fill(Infinity), parent=Array(n).fill(-1);
+        dist[0]=0;
 
-        if (path.length < 2) continue; // 1개만 있으면 연결 안함
+        for(var k=0;k<n;k++){
+            var u=-1;
+            for(var i=0;i<n;i++){
+                if(!selected[i] && (u===-1 || dist[i]<dist[u])) u=i;
+            }
+            selected[u]=true;
+            for(var v=0;v<n;v++){
+                if(!selected[v]){
+                    var d = getDistance(group[u].getPosition(), group[v].getPosition());
+                    if(d<dist[v]) { dist[v]=d; parent[v]=u; }
+                }
+            }
+        }
 
-        var line = new kakao.maps.Polyline({
-            path: path,
-            strokeWeight: 5,
-            strokeColor: '#FF5C5C', // 원하는 색상
-            strokeOpacity: 0.7,
-            strokeStyle: 'solid'
-        });
-
-        line.setMap(map);
+        for(var i=1;i<n;i++){
+            var path=[group[i].getPosition(), group[parent[i]].getPosition()];
+            var line = new kakao.maps.Polyline({
+                path:path, strokeWeight:5, strokeColor:'#FF5C5C', strokeOpacity:0.7, strokeStyle:'solid'
+            });
+            line.setMap(map);
+            allLines.push(line);
+        }
     }
 }
 
-// 버튼 클릭 시 실행
-document.getElementById('toggle_group').addEventListener('click', function() {
-    drawGroupLines();
-});
- </script>
+// --- 내 위치 토글 ---
+function toggleMyLocation() {
+    if(trackOn) stopTracking();
+
+    if(!myLocationOn){
+        myLocationOn = true;
+        document.getElementById('btnCurrentMe').classList.add('selected_btn');
+        navigator.geolocation.getCurrentPosition(function(pos){
+            showMyLocation(pos.coords.latitude, pos.coords.longitude);
+        }, geoError, { enableHighAccuracy:true });
+    } else {
+        myLocationOn = false;
+        document.getElementById('btnCurrentMe').classList.remove('selected_btn');
+        if(myLocationMarker) { myLocationMarker.setMap(null); myLocationMarker=null; }
+    }
+}
+
+function showMyLocation(lat,lng){
+    var latLng = new kakao.maps.LatLng(lat,lng);
+    if(!myLocationMarker){
+        myLocationMarker = new kakao.maps.Marker({ position:latLng, map:map, image:markerImage });
+    } else {
+        myLocationMarker.setPosition(latLng);
+        myLocationMarker.setMap(map);
+    }
+    map.panTo(latLng);
+    map.setLevel(5);
+}
+
+// --- 추적 토글 ---
+function toggleTracking(){
+    if(myLocationOn) toggleMyLocation();
+
+    if(!trackOn) startTracking();
+    else stopTracking();
+}
+
+function startTracking(){
+    trackOn = true;
+    document.getElementById('btnTrackMe').classList.add('selected_btn');
+
+    watchId = navigator.geolocation.watchPosition(function(pos){
+        var latLng = new kakao.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
+        if(!trackMarker){
+            trackMarker = new kakao.maps.Marker({ position:latLng, map:map, image:markerImage });
+        } else {
+            trackMarker.setPosition(latLng);
+            trackMarker.setMap(map);
+        }
+        map.panTo(latLng);
+    }, geoError, { enableHighAccuracy:true });
+
+    trackInterval = setInterval(function(){
+        if(trackMarker) trackMarker.setVisible(!trackMarker.getVisible());
+    }, 1000);
+}
+
+function stopTracking(){
+    trackOn = false;
+    document.getElementById('btnTrackMe').classList.remove('selected_btn');
+    if(watchId){ navigator.geolocation.clearWatch(watchId); watchId=null; }
+    if(trackInterval){ clearInterval(trackInterval); trackInterval=null; }
+    if(trackMarker){ trackMarker.setVisible(true); trackMarker.setMap(null); trackMarker=null; }
+}
+
+// --- MST 버튼 ---
+document.getElementById('toggle_group').addEventListener('click', drawGroupLinesMST);
+    
+    
+    </script>
 
 </body>
 </html>
