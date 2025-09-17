@@ -28,39 +28,57 @@
 #close {position: absolute;padding: 4px;top: 5px;left: 5px;cursor: pointer;background: #fff;border-radius: 4px;border: 1px solid #c8c8c8;box-shadow: 0px 1px #888;}
 #close .img {display: block;background: url(https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/rv_close.png) no-repeat;width: 14px;height: 14px;}
 
-/* 버튼 스타일 */
 .custom_typecontrol2_m {
     position: absolute;
-    bottom: 5px;
-    right: 10px;
+    bottom: 15px;
+    right: 15px;
     display: flex;
-    gap: 5px;
-    z-index: 200;
-    font-family:'Malgun Gothic', '맑은 고딕', sans-serif;
-}
-.custom_typecontrol2_m span {
-    display: block;
-    padding: 4px 8px;
-    cursor: pointer;
-    border-radius: 6px;
-    background: linear-gradient(#fff,#e6e6e6);
-    border: 1px solid #ccc;
-    font-size: 12px;
-    user-select: none;
-    text-align: center;
-}
-.custom_typecontrol2_m span.selected {
-    color: #fff;
-    background: linear-gradient(#425470, #5b6d8a);
+    gap: 6px;
+    z-index: 10;
+    font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
 }
 
-/* 깜빡임 */
-.blink {
-    animation: blink-animation 1s infinite;
+.custom_typecontrol2_m span {
+    display: inline-block;
+    padding: px 12px;          /* 글자수에 맞춰 가로 폭 조절 */
+    min-width: 40px;             /* 최소 폭 */
+    height: 32px;                /* 고정 높이 */
+    line-height: 32px;           /* 세로 중앙 정렬 */
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
-@keyframes blink-animation {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.2; }
+
+.custom_typecontrol2_m .btn {
+    background-color: #ffffff;
+    background: linear-gradient(145deg, #f9f9f9, #e6e6e6);
+    border: 1px solid #ccc;
+    color: #333;
+}
+
+.custom_typecontrol2_m .btn:hover {
+    background: linear-gradient(145deg, #f0f0f0, #dcdcdc);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.custom_typecontrol2_m .btn:active {
+    background: linear-gradient(145deg, #dcdcdc, #f0f0f0);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.custom_typecontrol2_m .selected_btn {
+    color: #fff;
+    background: linear-gradient(145deg, #425470, #5b6d8a);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.custom_typecontrol2_m .selected_btn:hover {
+    background: linear-gradient(145deg, #3a4a66, #53607f);
 }
 
        
@@ -94,7 +112,10 @@
 .distanceInfo .label {display:inline-block;width:50px;}
 .distanceInfo:after {content:none;}
        
-
+       /* 지도 전체에 항상 손 모양 */
+#map {
+    cursor: grab; /* 평상시 손 편 상태 */
+}
        
 .marker-pulse {
     position: relative;
@@ -401,132 +422,104 @@ map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPLEFT);
         
         // 내 위치 토글//
 var myMarker = null;
-var myMarkerInterval = null;
-var myPosLat, myPosLng;
-
-var currentToggle = false; // 내위치 토글 상태
-var trackToggle = false;   // 추적 토글 상태
-
-// 마커 이미지
-var markerImage = new kakao.maps.MarkerImage(
-  "https://hamancctv.github.io/5/icon-target.png",
-  new kakao.maps.Size(40, 40),
-  { offset: new kakao.maps.Point(20, 20) } // 중심 좌표
-);
-
-function clearMyMarker() {
-  if(myMarker) myMarker.setMap(null);
-  if(myMarkerInterval) {
-    clearInterval(myMarkerInterval);
-    myMarkerInterval = null;
-  }
-}
-
-// 내위치 토글
-var myMarker = null;
 var trackInterval = null;
-var map; // 기존 지도 변수
-var myMarkerImage = new kakao.maps.MarkerImage(
-    "https://hamancctv.github.io/5/icon-target.png",
-    new kakao.maps.Size(40, 40),
-    {offset: new kakao.maps.Point(20, 20)}
+
+// 내 위치 마커 이미지
+var markerImage = new kakao.maps.MarkerImage(
+  "https://hamancctv.github.io/5/icon-target.png", 
+  new kakao.maps.Size(40, 40),
+  { offset: new kakao.maps.Point(20, 20) }
 );
 
-function getMyLocation(callback) {
+// 내 위치 토글 상태
+var myLocationOn = false;
+var trackOn = false;
+
+// 내 위치 버튼
+document.getElementById('btnCurrentMe').addEventListener('click', function(){
+  if(!myLocationOn){
+    myLocationOn = true;
+    trackOn = false;
+    clearTracking();
+
     navigator.geolocation.getCurrentPosition(function(pos){
-        callback(pos.coords.latitude, pos.coords.longitude);
-    }, function(err){
-        console.error("위치 정보를 가져올 수 없습니다.", err);
-        alert("위치 정보를 가져올 수 없습니다.");
-    });
-}
+      var lat = pos.coords.latitude;
+      var lng = pos.coords.longitude;
 
-function addMyMarker(lat,lng, blink=false){
-    if(myMarker){
-        myMarker.setMap(null);
-        myMarker = null;
-    }
-    myMarker = new kakao.maps.Marker({
-        map: map,
-        position: new kakao.maps.LatLng(lat,lng),
-        image: myMarkerImage
-    });
-    if(blink){
-        var el = myMarker.getElement();
-        if(el) el.classList.add('blink');
-    }
-}
-
-function removeMyMarker(){
-    if(myMarker){
-        myMarker.setMap(null);
-        myMarker = null;
-    }
-}
-
-// 버튼 토글 로직
-var btnCurrent = document.getElementById('btnCurrentMe');
-var btnTrack = document.getElementById('btnTrackMe');
-
-var currentActive = null; // 'current' / 'track' / null
-
-btnCurrent.addEventListener('click', function(){
-    if(currentActive==='current'){
-        removeMyMarker();
-        currentActive = null;
-        btnCurrent.classList.remove('selected');
-    } else {
-        // 다른 기능 종료
-        stopTracking();
-        btnTrack.classList.remove('selected');
-
-        getMyLocation(function(lat,lng){
-            addMyMarker(lat,lng,false);
-            map.setCenter(new kakao.maps.LatLng(lat,lng));
-            currentActive = 'current';
-            btnCurrent.classList.add('selected');
+      if(!myMarker){
+        myMarker = new kakao.maps.Marker({
+          map: map,
+          position: new kakao.maps.LatLng(lat, lng),
+          image: markerImage,
+          title: "내위치",
+          clickable: false
         });
-    }
+      } else {
+        myMarker.setPosition(new kakao.maps.LatLng(lat, lng));
+        myMarker.setMap(map);
+      }
+
+      map.setCenter(new kakao.maps.LatLng(lat, lng));
+    });
+
+    this.classList.add('selected_btn');
+    document.getElementById('btnTrackMe').classList.remove('selected_btn');
+  } else {
+    myLocationOn = false;
+    if(myMarker) myMarker.setMap(null);
+    this.classList.remove('selected_btn');
+  }
 });
 
-btnTrack.addEventListener('click', function(){
-    if(currentActive==='track'){
-        stopTracking();
-        currentActive = null;
-        btnTrack.classList.remove('selected');
-    } else {
-        // 다른 기능 종료
-        removeMyMarker();
-        btnCurrent.classList.remove('selected');
+// 추적 버튼
+document.getElementById('btnTrackMe').addEventListener('click', function(){
+  if(!trackOn){
+    trackOn = true;
+    myLocationOn = false;
+    document.getElementById('btnCurrentMe').classList.remove('selected_btn');
+    this.classList.add('selected_btn');
 
-        startTracking();
-        currentActive = 'track';
-        btnTrack.classList.add('selected');
-    }
+    navigator.geolocation.getCurrentPosition(function(pos){
+      var lat = pos.coords.latitude;
+      var lng = pos.coords.longitude;
+
+      if(!myMarker){
+        myMarker = new kakao.maps.Marker({
+          map: map,
+          position: new kakao.maps.LatLng(lat, lng),
+          image: markerImage,
+          title: "추적",
+          clickable: false
+        });
+      } else {
+        myMarker.setPosition(new kakao.maps.LatLng(lat, lng));
+        myMarker.setMap(map);
+      }
+
+      map.setCenter(new kakao.maps.LatLng(lat, lng));
+      startTracking();
+    });
+  } else {
+    trackOn = false;
+    clearTracking();
+    this.classList.remove('selected_btn');
+  }
 });
 
+// 깜빡임 시작
 function startTracking(){
-    getMyLocation(function(lat,lng){
-        addMyMarker(lat,lng,true);
-        map.setCenter(new kakao.maps.LatLng(lat,lng));
-    });
-    trackInterval = setInterval(function(){
-        getMyLocation(function(lat,lng){
-            if(myMarker) myMarker.setPosition(new kakao.maps.LatLng(lat,lng));
-        });
-    }, 2000); // 2초마다 위치 업데이트
+  if(trackInterval) clearInterval(trackInterval);
+  trackInterval = setInterval(function(){
+    myMarker.setVisible(!myMarker.getVisible());
+  }, 500);
 }
 
-function stopTracking(){
-    if(trackInterval){
-        clearInterval(trackInterval);
-        trackInterval = null;
-    }
-    removeMyMarker();
+// 깜빡임 종료
+function clearTracking(){
+  if(trackInterval) clearInterval(trackInterval);
+  trackInterval = null;
+  if(myMarker) myMarker.setVisible(true);
 }
-
-        
-        
     // 중복 제거 로직
 // unique 객체에 lat, lng 뿐만 아니라 markerImage도 체크하여 완벽한 중복 제거
 var unique = {};
