@@ -988,41 +988,7 @@ function showMyLocation(lat,lng){
     map.setLevel(5);
 }
 
-// --- 추적 토글 ---
-function toggleTracking(){
-    if(myLocationOn) toggleMyLocation();
 
-    if(!trackOn) startTracking();
-    else stopTracking();
-}
-
-function startTracking(){
-    trackOn = true;
-    document.getElementById('btnTrackMe').classList.add('selected_btn');
-
-    watchId = navigator.geolocation.watchPosition(function(pos){
-        var latLng = new kakao.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
-        if(!trackMarker){
-            trackMarker = new kakao.maps.Marker({ position:latLng, map:map, image:markerImage });
-        } else {
-            trackMarker.setPosition(latLng);
-            trackMarker.setMap(map);
-        }
-        map.panTo(latLng);
-    }, geoError, { enableHighAccuracy:true });
-
-    trackInterval = setInterval(function(){
-        if(trackMarker) trackMarker.setVisible(!trackMarker.getVisible());
-    }, 1000);
-}
- 
-function stopTracking(){
-    trackOn = false;
-    document.getElementById('btnTrackMe').classList.remove('selected_btn');
-    if(watchId){ navigator.geolocation.clearWatch(watchId); watchId=null; }
-    if(trackInterval){ clearInterval(trackInterval); trackInterval=null; }
-    if(trackMarker){ trackMarker.setVisible(true); trackMarker.setMap(null); trackMarker=null; }
-}
 
 // --- MST 버튼 ---
 document.getElementById('toggle_group').addEventListener('click', drawGroupLinesMST);
