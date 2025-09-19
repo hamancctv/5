@@ -525,7 +525,7 @@ function startTracking(){
 
     trackInterval = setInterval(function(){
         if(trackMarker) trackMarker.setVisible(!trackMarker.getVisible());
-    }, 1000); // 깜빡임 속도 1초
+    }, 500); // 깜빡임 속도 0.5초
 }
 
 function stopTracking(){
