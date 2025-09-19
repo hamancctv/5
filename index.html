@@ -607,32 +607,84 @@ kakao.maps.event.addListener(marker2, 'click', function() {
     });
     clickOverlays = [];
 
-    // 클릭한 마커의 그룹 확인
-    var group = marker2.group;
+var allLines = [];
+var allOverlays = [];
 
-    // 그룹이 있는 경우만 선을 그림
-    if (group) {
-        // 기존 폴리라인 제거
-        if (polyline) polyline.setMap(null);
-
-        // 같은 그룹 마커 위치만 모음
-        var linePath = markers
-            .filter(m => m.group === group)
-            .map(m => m.getPosition());
-
-        if (linePath.length > 1) {
-            polyline = new kakao.maps.Polyline({
-                path: linePath,
-                strokeWeight: 5,
-                strokeColor: '#FF5C5C',
-                strokeOpacity: 0.7,
-                strokeStyle: 'solid'
-            });
-            polyline.setMap(map);
-        }
-    } else {
-        if (polyline) polyline.setMap(null);
+function drawGroupLinesMST(){
+    // 기존 라인/오버레이 제거
+    if(allLines.length>0 || allOverlays.length>0){
+        allLines.forEach(l=>l.setMap(null));
+        allOverlays.forEach(o=>o.setMap(null));
+        allLines=[];
+        allOverlays=[];
+        return;
     }
+
+    var groupMarkers={};
+
+    markers.forEach(m=>{
+        if(!m.group) return;
+        var gName = m.group;
+
+        // 숫자+하이픈 그룹 처리: 하이픈 무시하고 숫자만 추출
+        if(/\d/.test(gName)){
+            gName = gName.replace(/[^0-9]/g, ''); // 숫자만 남기기
+        }
+
+        if(!groupMarkers[gName]) groupMarkers[gName]=[];
+        groupMarkers[gName].push(m);
+    });
+
+    for(var g in groupMarkers){
+        var group = groupMarkers[g];
+
+        // 한글 그룹명이면 연결선 대신 텍스트 오버레이만 표시
+        if(/[가-힣]/.test(g)){
+            group.forEach(m=>{
+                var overlay = new kakao.maps.CustomOverlay({
+                    position: m.getPosition(),
+                    content: `<div style="padding:2px 5px; background:#fff; border:1px solid #888; border-radius:3px; font-size:12px;">${g}</div>`,
+                    yAnchor: 1
+                });
+                overlay.setMap(map);
+                allOverlays.push(overlay);
+            });
+            continue;
+        }
+
+        // 숫자 그룹 MST 연결
+        if(group.length<2) continue;
+
+        var n=group.length, selected=Array(n).fill(false), dist=Array(n).fill(Infinity), parent=Array(n).fill(-1);
+        dist[0]=0;
+
+        for(var k=0;k<n;k++){
+            var u=-1;
+            for(var i=0;i<n;i++){
+                if(!selected[i] && (u==-1 || dist[i]<dist[u])) u=i;
+            }
+            selected[u]=true;
+            for(var v=0;v<n;v++){
+                if(!selected[v]){
+                    var d=getDistance(group[u].getPosition(), group[v].getPosition());
+                    if(d<dist[v]) { dist[v]=d; parent[v]=u; }
+                }
+            }
+        }
+
+        for(var i=1;i<n;i++){
+            var path=[group[i].getPosition(), group[parent[i]].getPosition()];
+            var line = new kakao.maps.Polyline({
+                path:path, strokeWeight:3, strokeColor:'#FF5C5C', strokeOpacity:0.7
+            });
+            line.setMap(map);
+            allLines.push(line);
+        }
+    }
+}
+
+// 버튼 클릭 이벤트
+document.getElementById('toggle_group').addEventListener('click', drawGroupLinesMST);
     
     
             
