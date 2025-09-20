@@ -834,11 +834,6 @@ kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
 </script>
 
 
-    <div id="menu_rule" class="bg_white" style="border:1px solid #919191;border-radius:5px;">   
-        <button id='btnMARKER' onclick="rule_line()">거리</button>
-	    <button id='btnPOLYLINE'  onclick="rule_poly()">면적</button>
-        <button id='btnARROW'  onclick="rule_circle()">반경</button>    
-        <button class='berror' onclick="RulerRemove()">초기화</button></div>
 
     // sel_txt 시작
 <div id="menu_wrap" class="bg_white" style="border:1px solid #919191;border-radius:10px;">
@@ -953,34 +948,6 @@ function drawGroupLinesMST(){
 document.getElementById('toggle_group').addEventListener('click', drawGroupLinesMST);
 
 
-// --- 내 위치 토글 ---
-function toggleMyLocation() {
-    if(trackOn) stopTracking();
-
-    if(!myLocationOn){
-        myLocationOn = true;
-        document.getElementById('btnCurrentMe').classList.add('selected_btn');
-        navigator.geolocation.getCurrentPosition(function(pos){
-            showMyLocation(pos.coords.latitude, pos.coords.longitude);
-        }, geoError, { enableHighAccuracy:true });
-    } else {
-        myLocationOn = false;
-        document.getElementById('btnCurrentMe').classList.remove('selected_btn');
-        if(myLocationMarker) { myLocationMarker.setMap(null); myLocationMarker=null; }
-    }
-}
-
-function showMyLocation(lat,lng){
-    var latLng = new kakao.maps.LatLng(lat,lng);
-    if(!myLocationMarker){
-        myLocationMarker = new kakao.maps.Marker({ position:latLng, map:map, image:markerImage });
-    } else {
-        myLocationMarker.setPosition(latLng);
-        myLocationMarker.setMap(map);
-    }
-    map.panTo(latLng);
-    map.setLevel(5);
-}
 
 
 
