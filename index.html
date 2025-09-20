@@ -1,5 +1,6 @@
 
 
+
 <html>
 
 <head>
@@ -127,47 +128,7 @@ input, textarea, select {
 .distanceInfo .label {display:inline-block;width:50px;}
 .distanceInfo:after {content:none;}
        
-       /* 지도 전체에 항상 손 모양 */
-#map {
-    cursor: grab; /* 평상시 손 편 상태 */
-}
-       
-.marker-pulse {
-    position: relative;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background-color: rgba(255, 60, 0, 0.4);
-    animation: pulse 1s ease-out infinite;
-    transform: translate(-50%, -50%); /* 중심 맞추기 */
-}
-
-@keyframes pulse {
-    0% {
-        transform: translate(-50%, -50%) scale(0.5);
-        opacity: 0.8;
-    }
-    100% {
-        transform: translate(-50%, -50%) scale(1.5);
-        opacity: 0;
-    }
-}
-           
-       #alert-overlay {
-    position: fixed;
-    top: 50px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 15px 30px;
-    border-radius: 8px;
-    z-index: 1000;
-    display: none;
-    font-size: 1.2em;
-    font-weight: bold;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
+  
     </style>
 
 <div id="container">
