@@ -3,6 +3,7 @@
 
 
 
+
 <html>
 
 <head>
@@ -54,49 +55,54 @@
         width: 14px;height: 14px;
     }
 
-    /* 하단 컨트롤 */
-    .custom_typecontrol2_m {
-        position: absolute;
-        bottom: 15px;
-        right: 15px;
-        display: flex;
-        gap: 6px;
-        z-index: 10;
-        font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
-    }
-    .custom_typecontrol2_m span {
-        display: inline-block;
-        min-width: 40px;
-        height: 32px;
-        line-height: 32px;
-        text-align: center;
-        cursor: pointer;
-        user-select: none;
-        border-radius: 6px;
-        font-size: 13px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-        padding: 0 12px;
-    }
-    .custom_typecontrol2_m .btn {
-        background: linear-gradient(145deg, #f9f9f9, #e6e6e6);
-        border: 1px solid #ccc;
-        color: #333;
-    }
-    .custom_typecontrol2_m .btn:hover {
-        background: linear-gradient(145deg, #f0f0f0, #dcdcdc);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-    .custom_typecontrol2_m .btn:active {
-        background: linear-gradient(145deg, #dcdcdc, #f0f0f0);
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-    }
-    .custom_typecontrol2_m .selected_btn {
-        color: #fff;
-        background: linear-gradient(145deg, #425470, #5b6d8a);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
+ /* 하단 컨트롤 버튼 스타일 개선 */
+.custom_typecontrol2_m {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    display: flex;
+    gap: 8px; /* 버튼 사이 간격 */
+    z-index: 10;
+    font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+}
+
+.custom_typecontrol2_m span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 50px;
+    height: 36px;
+    padding: 0 12px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background: #f0f0f0;
+    color: #333;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+/* 호버 효과 */
+.custom_typecontrol2_m span:hover {
+    background: linear-gradient(145deg, #e0e0e0, #d1d1d1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* 클릭/선택된 버튼 */
+.custom_typecontrol2_m span.selected_btn {
+    background: linear-gradient(145deg, #425470, #5b6d8a);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    border-color: #2e3d5c;
+}
+
+/* 클릭 시 누른 느낌 */
+.custom_typecontrol2_m span:active {
+    background: linear-gradient(145deg, #3a4b66, #52647e);
+}
 
     /* 공통 버튼 */
     .btn-common {
@@ -253,6 +259,7 @@
     <span id="btnCurrentMe" class="btn btn-common" onclick="toggleMyLocation()">위치</span>
     <span id="btnTrackMe" class="btn btn-common" onclick="toggleTracking()">추적</span>
   </div>
+    
 </body>
 
 <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=2634b7b6dd61e41a4d6c0bf40a2ef820&libraries=services,clusterer,drawing"></script>
@@ -262,6 +269,17 @@
     <script type="text/javascript" src="https://hamancctv.github.io/5/positions.js"></script> 
     
     <script>
+        const toggleGroupBtn = document.getElementById('toggle_group');
+toggleGroupBtn.addEventListener('click', function() {
+    drawGroupLinesMST();
+
+    // 토글 클래스 적용
+    if (toggleGroupBtn.classList.contains('selected_btn')) {
+        toggleGroupBtn.classList.remove('selected_btn');
+    } else {
+        toggleGroupBtn.classList.add('selected_btn');
+    }
+});
 var overlayOn = false, // 지도 위에 로드뷰 오버레이가 추가된 상태를 가지고 있을 변수
     container = document.getElementById('container'), // 지도와 로드뷰를 감싸고 있는 div 입니다
     mapWrapper = document.getElementById('mapWrapper'), // 지도를 감싸고 있는 div 입니다
