@@ -12,167 +12,209 @@
 	
 </head>
 
-    <body>
-	<div id="alert-overlay">
-    <div id="alert-message"></div>
-</div>
-		<style>
-            /* 지도 전체에서 텍스트 선택 방지 */
-#map, #map * {
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    -khtml-user-select: none;
-}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>GIS 모바일</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="icon" href="https://hamancctv.github.io/5/favicon.ico" sizes="32x32"/>
 
-/* 입력 가능한 영역은 선택 가능 */
-input, textarea, select {
-    user-select: text !important;
-    -webkit-user-select: text !important;
-    -moz-user-select: text !important;
-    -ms-user-select: text !important;
-    -khtml-user-select: text !important;
-}
-            
-#container {overflow:hidden;height:100%;position:relative;}
-#mapWrapper {width:100%;height:100%;z-index:1;}
-#rvWrapper {width:50%;height:100%;top:0;right:0;position:absolute;z-index:0;}
-#container.view_roadview #mapWrapper {width: 50%;}
-#roadviewControl {position:absolute;top:2px;left:115px;width:42px;height:42px;z-index: 1;cursor: pointer; background: url(https://t1.daumcdn.net/localimg/localimages/07/2018/pc/common/img_search.png) 0 -450px no-repeat;}
-#roadviewControl.active {background-position:0 -350px;}
-#close {position: absolute;padding: 4px;top: 5px;left: 5px;cursor: pointer;background: #fff;border-radius: 4px;border: 1px solid #c8c8c8;box-shadow: 0px 1px #888;}
-#close .img {display: block;background: url(https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/rv_close.png) no-repeat;width: 14px;height: 14px;}
+  <style>
+    /* 지도 전체에서 텍스트 선택 방지 */
+    #map, #map * {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        -khtml-user-select: none;
+    }
+    /* 입력 가능한 영역은 선택 가능 */
+    input, textarea, select {
+        user-select: text !important;
+        -webkit-user-select: text !important;
+        -moz-user-select: text !important;
+        -ms-user-select: text !important;
+        -khtml-user-select: text !important;
+    }
 
-.custom_typecontrol2_m {
-    position: absolute;
-    bottom: 15px;
-    right: 15px;
-    display: flex;
-    gap: 6px;
-    z-index: 10;
-    font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
-}
+    #container {overflow:hidden;height:100%;position:relative;}
+    #mapWrapper {width:100%;height:100%;z-index:1;}
+    #rvWrapper {width:50%;height:100%;top:0;right:0;position:absolute;z-index:0;}
+    #container.view_roadview #mapWrapper {width: 50%;}
+    #roadviewControl {
+        position:absolute;top:2px;left:115px;width:42px;height:42px;
+        z-index: 1;cursor: pointer;
+        background: url(https://t1.daumcdn.net/localimg/localimages/07/2018/pc/common/img_search.png) 0 -450px no-repeat;
+    }
+    #roadviewControl.active {background-position:0 -350px;}
+    #close {
+        position: absolute;padding: 4px;top: 5px;left: 5px;cursor: pointer;
+        background: #fff;border-radius: 4px;border: 1px solid #c8c8c8;box-shadow: 0px 1px #888;
+    }
+    #close .img {
+        display: block;
+        background: url(https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/rv_close.png) no-repeat;
+        width: 14px;height: 14px;
+    }
 
-.custom_typecontrol2_m span {
-    display: inline-block;
-    padding: px 12px;          /* 글자수에 맞춰 가로 폭 조절 */
-    min-width: 40px;             /* 최소 폭 */
-    height: 32px;                /* 고정 높이 */
-    line-height: 32px;           /* 세로 중앙 정렬 */
-    text-align: center;
-    cursor: pointer;
-    user-select: none;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-}
+    /* 하단 컨트롤 */
+    .custom_typecontrol2_m {
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        display: flex;
+        gap: 6px;
+        z-index: 10;
+        font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+    }
+    .custom_typecontrol2_m span {
+        display: inline-block;
+        min-width: 40px;
+        height: 32px;
+        line-height: 32px;
+        text-align: center;
+        cursor: pointer;
+        user-select: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        padding: 0 12px;
+    }
+    .custom_typecontrol2_m .btn {
+        background: linear-gradient(145deg, #f9f9f9, #e6e6e6);
+        border: 1px solid #ccc;
+        color: #333;
+    }
+    .custom_typecontrol2_m .btn:hover {
+        background: linear-gradient(145deg, #f0f0f0, #dcdcdc);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .custom_typecontrol2_m .btn:active {
+        background: linear-gradient(145deg, #dcdcdc, #f0f0f0);
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .custom_typecontrol2_m .selected_btn {
+        color: #fff;
+        background: linear-gradient(145deg, #425470, #5b6d8a);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
 
-.custom_typecontrol2_m .btn {
-    background-color: #ffffff;
-    background: linear-gradient(145deg, #f9f9f9, #e6e6e6);
-    border: 1px solid #ccc;
-    color: #333;
-}
+    /* 공통 버튼 */
+    .btn-common {
+        height: 32px;
+        padding: 0 10px;
+        border: 1px solid #ccc;
+        background: #f8f9fa;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        z-index: 200;
+    }
+    .btn-common:hover { background: #e9ecef; }
+    .btn-primary {
+        background: #4caf50;
+        color: white;
+        border: none;
+    }
+    .btn-primary:hover { background: #43a047; }
 
-.custom_typecontrol2_m .btn:hover {
-    background: linear-gradient(145deg, #f0f0f0, #dcdcdc);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
+    /* 공통 input */
+    .input-common {
+        height: 32px;
+        padding: 0 8px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 14px;
+        z-index: 200;
+    }
 
-.custom_typecontrol2_m .btn:active {
-    background: linear-gradient(145deg, #dcdcdc, #f0f0f0);
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-}
+    /* 상단 툴바 */
+    .toolbar {
+        position: absolute;
+        top: 12px;
+        left: 10px;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        z-index: 500;
+    }
+    .toolbar-right {
+        position: absolute;
+        top: 12px;
+        right: 10px;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        z-index: 500;
+    }
 
-.custom_typecontrol2_m .selected_btn {
-    color: #fff;
-    background: linear-gradient(145deg, #425470, #5b6d8a);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
+    html, body {width:100%;height:100%;margin:0;padding:0;overflow:hidden;}
 
-.custom_typecontrol2_m .selected_btn:hover {
-    background: linear-gradient(145deg, #3a4a66, #53607f);
-}
+    #menu_wrap {
+        position:absolute;top:40px;right:8px;bottom:70%;
+        width:270px;margin:3px 0 5px 10px;padding:5px;
+        overflow-y:auto;background:rgba(255, 255, 255, 0.8);
+        z-index: 1;font-size:12px;
+    }
 
-       
- html, body {width:100%;height:100%;margin:0;padding:0;overflow: hidden}
-        
-#menu_wrap {position:absolute;top:40px;right:8px;bottom:70%;width:270px;margin:3px 0 5px 10px;padding:5px;overflow-y:auto;background:rgba(255, 255, 255, 0.8);z-index: 1;font-size:12px;border-radius: 0px;}
-.bg_white {background:#fff;}
-#menu_wrap hr {display: block; height: 1px;border: 0; border-top: 2px solid #5F5F5F;margin:3px 0;}
-#menu_wrap .option{text-align: center;}
-  .name:hover { background:#cdcdcd; }     
-.bg_white {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
-}
+    /* 알림 오버레이 */
+    #alert-overlay {
+        position: fixed;
+        top: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 15px 30px;
+        border-radius: 8px;
+        z-index: 1000;
+        display: none;
+        font-size: 1.2em;
+        font-weight: bold;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+  <div id="alert-overlay"><div id="alert-message"></div></div>
 
-#menu_rule {position:absolute;left:2;top:45;height:24px;width:197px;margin:0px 0px 0px 0px;padding:5px;overflow-y:none;background:rgba(255, 255, 255, 0.8);z-index: 1;font-size:12px;border-radius: 0px;}
-.bg_white {background:#fff;}
-#menu_rule hr {display: block; height: 1px;border: 0; border-top: 2px solid #5F5F5F;margin:3px 0;}
-#menu_rule .option{text-align: center;}
-       
-       .info {position:relative;top:5px;left:5px;border-radius:6px;border: 1px solid #ccc;border-bottom:2px solid #ddd;font-size:12px;padding:5px;background:#fff;list-style:none;margin:0;} 
-.info:nth-of-type(n) {border:0; box-shadow:0px 1px 2px #888;}    
-.number {font-weight:bold;color:#00a0e9;} 
+  <div id="container">
+      <div id="rvWrapper">
+          <div id="roadview" style="width:100%;height:100%;"></div>
+          <div id="close" title="로드뷰닫기" onclick="closeRoadview()"><span class="img"></span></div>
+      </div>
+      <div id="mapWrapper">
+          <div id="map" style="width:100%;height:100%"></div>
+          <div id="roadviewControl" onclick="setRoadviewRoad()"></div>
+      </div>
+  </div>
 
-.dot {overflow:hidden;float:left;width:12px;height:12px;background: url('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/mini_circle.png');}    
-.dotOverlay {position:relative;bottom:10px;border-radius:6px;border: 1px solid #ccc;border-bottom:2px solid #ddd;float:left;font-size:12px;padding:5px;background:#fff;}
-.dotOverlay:nth-of-type(n) {border:0; box-shadow:0px 1px 2px #888;}    
-.number {font-weight:bold;color:#ee6152;}
-.dotOverlay:after {content:'';position:absolute;margin-left:-6px;left:50%;bottom:-8px;width:11px;height:8px;background:url('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/vertex_white_small.png')}
-.distanceInfo {position:relative;top:5px;left:5px;list-style:none;margin:0;}
-.distanceInfo .label {display:inline-block;width:50px;}
-.distanceInfo:after {content:none;}
-       
- 
-       #alert-overlay {
-    position: fixed;
-    top: 50px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 15px 30px;
-    border-radius: 8px;
-    z-index: 1000;
-    display: none;
-    font-size: 1.2em;
-    font-weight: bold;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-    </style>
+  <!-- 좌측 툴바 (검색) -->
+  <div class="toolbar">
+    <button id="searchBtn" class="btn-common btn-primary" onclick="btnsearch_click()">검색</button>
+    <input type="search" id="keyword" class="input-common"
+           onkeyup="filter()"
+           onkeydown="if(event.keyCode === 13) { btnsearch_click(); }"
+           placeholder="검색어 입력"/>
+  </div>
 
-<div id="container">
-    <div id="rvWrapper">
-        <div id="roadview" style="width:100%;height:100%;"></div> <!-- 로드뷰를 표시할 div 입니다 -->
-        <div id="close" title="로드뷰닫기" onclick="closeRoadview()"><span class="img"></span></div>
-    </div>
-    <div id="mapWrapper">
-        <div id="map" style="width:100%;height:100%"></div> <!-- 지도를 표시할 div 입니다 -->
-        <div id="roadviewControl" onclick="setRoadviewRoad()"></div>
-    </div>
-</div>
-  <!-- 2-2. input:text 태그 -->
-    <button id="btn_input_copy" style= "position:absolute;top:12;width:45;right:285;z-index:200">복사</button>
- <input type="text" inputmode="none" class='form-control' style= "position:absolute;top:13;width:270;right:10;z-index:20" id = "gpsyx" value ="35.2725308711779, 128.406307024695"></button>
- 
-    <!-- 2-3. 토글버튼 -->
+  <!-- 우측 툴바 (좌표/복사) -->
+  <div class="toolbar-right">
+    <input type="text" id="gpsyx" class="input-common" inputmode="none"
+           value="35.2725308711779, 128.406307024695"/>
+    <button id="btn_input_copy" class="btn-common">복사</button>
+  </div>
 
-   
-    <!-- 전용회선 버튼 -->
-
-
- <input type="search" id="keyword" onkeyup="filter()" onkeydown="if(event.keyCode === 13) { btnsearch_click(); }" class="clickdown" style="position:absolute;top:13;width:200;left:210;z-index:200"/>
-   <button tabindex="-1" id="searchBtn" onclick="btnsearch_click()" style="position:absolute;top:12;width:45;left:160;z-index:20" class="bsuccess">검색</button>
-<div class="custom_typecontrol2_m radius_border">
-    <span id="toggle_group" class="btn" onclick="toggleGroup()">회선</span>
-    <span id="btnCurrentMe" class="btn" onclick="toggleMyLocation()">위치</span>
-    <span id="btnTrackMe" class="btn" onclick="toggleTracking()">추적</span>
-</div>
+  <!-- 하단 컨트롤 -->
+  <div class="custom_typecontrol2_m radius_border">
+    <span id="toggle_group" class="btn btn-common" onclick="drawGroupLinesMST()">회선</span>
+    <span id="btnCurrentMe" class="btn btn-common" onclick="toggleMyLocation()">위치</span>
+    <span id="btnTrackMe" class="btn btn-common" onclick="toggleTracking()">추적</span>
+  </div>
+</body>
 
 <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=2634b7b6dd61e41a4d6c0bf40a2ef820&libraries=services,clusterer,drawing"></script>
 <script src="https://code.jquery.com/jquery-3.6.1.js" integrity="sha256-3zlB5s2uwoUzrXK3BT7AX3FyvojsraNFxCc2vC/7pNI=" crossorigin="anonymous"></script>
@@ -921,7 +963,6 @@ function drawGroupLinesMST(){
 }
 
 // 버튼 클릭 이벤트
-document.getElementById('toggle_group').addEventListener('click', drawGroupLinesMST);
 
 
 
