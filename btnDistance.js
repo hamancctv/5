@@ -1,5 +1,7 @@
+
 var btn=document.getElementById('btnDistance');
-var drawing=false, moveLine=null, clickLine=null, dots=[], totalOverlay=null;
+var totalBox=document.getElementById('totalDistanceBox');
+var drawing=false, moveLine=null, clickLine=null, dots=[];
 
 btn.onclick=function(){
   drawing=!drawing;
@@ -36,7 +38,7 @@ kakao.maps.event.addListener(map,'click',function(e){
 
     var segDist=new kakao.maps.Polyline({path:[prev,pos]}).getLength();
     addDot(pos,segDist);
-    showTotalDistance(pos);
+    showTotalDistance();
   }
 });
 
@@ -70,38 +72,31 @@ function addDot(position,segDist){
   }
 }
 
-// 총거리 박스 표시 (오른쪽 아래)
-function showTotalDistance(pos){
+// 총거리 박스 (화면 오른쪽 아래 고정)
+function showTotalDistance(){
   var totalLen=Math.round(clickLine.getLength());
+  totalBox.style.display="block";
+  totalBox.querySelector(".number") 
+    ? totalBox.querySelector(".number").innerText=totalLen
+    : totalBox.innerHTML='총거리: <span class="number">'+totalLen+'</span> m <span class="closeBtn">X</span>';
 
-  if(totalOverlay) totalOverlay.setMap(null);
-  var box=document.createElement('div');
-  box.className='distanceInfo';
-  box.innerHTML='총거리 <span class="number">'+totalLen+'</span>m <span class="closeBtn">X</span>';
-
-  box.querySelector('.closeBtn').onclick=function(e){
+  totalBox.querySelector(".closeBtn").onclick=function(e){
     e.stopPropagation();
     resetMeasure();
     drawing=false;
     btn.classList.remove('active');
     map.setCursor('');
   };
-
-  totalOverlay=new kakao.maps.CustomOverlay({
-    map:map, position:pos, content:box,
-    xAnchor:1, yAnchor:1,   // 오른쪽-아래 정렬
-    pixelOffset:new kakao.maps.Point(-10,-10)
-  });
 }
 
 // 초기화
 function resetMeasure(){
   if(clickLine){clickLine.setMap(null); clickLine=null;}
   if(moveLine){moveLine.setMap(null); moveLine=null;}
-  if(totalOverlay){totalOverlay.setMap(null); totalOverlay=null;}
   dots.forEach(function(d){
     if(d.circle) d.circle.setMap(null);
     if(d.distance) d.distance.setMap(null);
   });
   dots=[];
+  totalBox.style.display="none";
 }
