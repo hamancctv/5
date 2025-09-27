@@ -1,87 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>카카오맵 거리재기 (PC+모바일)</title>
-  <style>
-    html, body, #map {width:100%; height:100%; margin:0; padding:0;}
-    #btnDistance {
-      position:absolute; top:10px; left:10px; z-index:1000;
-      padding:6px 12px; background:#fff; border:1px solid #666; border-radius:4px;
-      cursor:pointer; font-size:14px; font-weight:bold;
-    }
-    #btnDistance.active { background:#db4040; color:#fff; }
-
-    .dot {
-      overflow:hidden; float:left; width:8px; height:8px;
-      background:#db4040; border-radius:50%; border:2px solid #fff;
-    }
-    .dotOverlay {
-      position: relative;
-      bottom: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      background: #fffbe6;
-      padding: 4px 8px;
-      font-size: 12px;
-      white-space: nowrap;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    }
-    .dotOverlay:after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      bottom: -6px;
-      margin-left: -6px;
-      border-width: 6px 6px 0;
-      border-style: solid;
-      border-color: #fffbe6 transparent;
-    }
-    .dotOverlay:before {
-      content: "";
-      position: absolute;
-      left: 50%;
-      bottom: -7px;
-      margin-left: -7px;
-      border-width: 7px 7px 0;
-      border-style: solid;
-      border-color: #ccc transparent;
-    }
-    .distanceInfo {
-      border-radius: 6px;
-      border: 1px solid #333;
-      background: #fff;
-      padding: 6px 10px;
-      font-size: 13px;
-      font-weight: bold;
-      white-space: nowrap;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-    }
-    .distanceInfo .closeBtn {
-      margin-left: 8px;
-      color: #db4040;
-      font-weight: bold;
-      cursor: pointer;
-    }
-  </style>
-  <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_APPKEY"></script>
-</head>
-<body>
-  <button id="btnDistance">거리재기</button>
-  <div id="map"></div>
-
-<script>
-var map = new kakao.maps.Map(document.getElementById('map'), {
-  center: new kakao.maps.LatLng(37.5665, 126.9780),
-  level: 5
-});
-
 var btn = document.getElementById('btnDistance');
 var drawing = false, moveLine = null, clickLine = null, dots = [], totalOverlay = null;
 var isTouchMode = 'ontouchstart' in window;
+var mapContainer = document.getElementById('map');
 
-// ---------------- 거리 버튼 ----------------
+// ---------------- 버튼 ----------------
 btn.onclick = function(){
   drawing = !drawing;
   if(drawing){
@@ -133,7 +55,7 @@ function pointToLatLng(x,y){
 }
 function onTouchStart(ev){
   if(!drawing) return;
-  if(ev.touches.length>1) return; // 두 손가락 → 지도 이동/줌 허용
+  if(ev.touches.length>1) return;
   ev.preventDefault();
   var t=ev.touches[0];
   var ll=pointToLatLng(t.clientX,t.clientY);
@@ -179,7 +101,7 @@ function updateMoveLine(ll){
   moveLine.setMap(map);
 }
 
-// ---------------- 공통 함수 ----------------
+// ---------------- 공통 ----------------
 function addDot(position,segDist){
   var circle=new kakao.maps.CustomOverlay({
     position:position, content:'<span class="dot"></span>', zIndex:1
@@ -257,8 +179,6 @@ function resetMeasure(){
 // ---------------- 이벤트 바인딩 ----------------
 function bindInputHandlers(){
   if(isTouchMode){
-    map.setDraggable(true);
-    map.setZoomable(true);
     mapContainer.addEventListener('touchstart',onTouchStart,{passive:false});
     mapContainer.addEventListener('touchmove',onTouchMove,{passive:false});
     mapContainer.addEventListener('touchend',onTouchEnd,{passive:false});
@@ -277,8 +197,3 @@ function unbindInputHandlers(){
     kakao.maps.event.removeListener(map,'mousemove',onMapMove);
   }
 }
-
-var mapContainer=document.getElementById('map');
-</script>
-</body>
-</html>
