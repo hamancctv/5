@@ -15,12 +15,10 @@ btn.onclick = function(){
   }
 };
 
-// 📌 공통 클릭 처리 (PC + 모바일)
-function handleClick(e) {
-  if (!drawing) return;
-  var pos = e.latLng;
-
+// 📌 공통 "점 확정" 처리
+function confirmPoint(pos) {
   if (!clickLine) {
+    // 첫 점
     clickLine = new kakao.maps.Polyline({
       map: map, path: [pos],
       strokeWeight: 3, strokeColor: '#db4040', strokeOpacity: 1, strokeStyle: 'solid'
@@ -28,7 +26,7 @@ function handleClick(e) {
     moveLine = new kakao.maps.Polyline({
       strokeWeight: 3, strokeColor: '#db4040', strokeOpacity: 0.5, strokeStyle: 'solid'
     });
-    addDot(pos, null); // 첫 점
+    addDot(pos, null);
   } else {
     var path = clickLine.getPath();
     var prev = path[path.length - 1];
@@ -40,7 +38,7 @@ function handleClick(e) {
   }
 }
 
-// 📌 공통 이동 처리 (PC + 모바일)
+// 📌 이동 처리
 function handleMove(e) {
   if (!drawing || !clickLine) return;
   var path = clickLine.getPath();
@@ -48,13 +46,19 @@ function handleMove(e) {
   moveLine.setMap(map);
 }
 
-// PC 이벤트 등록
-kakao.maps.event.addListener(map, 'click', handleClick);
+// 📌 PC: 마우스 이벤트
 kakao.maps.event.addListener(map, 'mousemove', handleMove);
+kakao.maps.event.addListener(map, 'click', function(e){
+  if (!drawing) return;
+  confirmPoint(e.latLng);
+});
 
-// 모바일 이벤트 등록
-kakao.maps.event.addListener(map, 'touchstart', handleClick);
+// 📌 모바일: 터치 이벤트
 kakao.maps.event.addListener(map, 'touchmove', handleMove);
+kakao.maps.event.addListener(map, 'touchend', function(e){
+  if (!drawing) return;
+  confirmPoint(e.latLng);
+});
 
 // 점 + 세그먼트 오버레이
 function addDot(position, segDist){
@@ -64,7 +68,7 @@ function addDot(position, segDist){
   circle.setMap(map);
 
   var distOverlay = null;
-  if (segDist) { // 세그먼트 거리 (말풍선)
+  if (segDist) {
     var content = document.createElement('div');
     content.className = 'dotOverlay';
     content.innerText = Math.round(segDist) + " m";
@@ -74,7 +78,7 @@ function addDot(position, segDist){
     });
     distOverlay.setMap(map);
 
-    // 종료 버튼 역할
+    // 📌 말풍선 클릭 → 종료
     content.addEventListener('click', function(evt){
       evt.stopPropagation();
       finishMeasure(position);
