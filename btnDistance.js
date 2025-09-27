@@ -1,31 +1,25 @@
-// ================== 거리재기 ==================
 var btn = document.getElementById('btnDistance');
-var finishBtn = null; // 모바일 전용 종료버튼
 var drawing = false, moveLine = null, clickLine = null, dots = [], totalOverlay = null;
 
-// 📱 모바일 여부 체크
-function isMobile() {
-  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-}
-
-// 거리 버튼 클릭
+// 버튼 토글
 btn.onclick = function(){
   drawing = !drawing;
   if (drawing) {
     resetMeasure();
     btn.classList.add('active');
     map.setCursor('crosshair');
-    if (isMobile()) showFinishBtn(); // 모바일 → 종료버튼 표시
   } else {
     resetMeasure();
     btn.classList.remove('active');
     map.setCursor('');
-    hideFinishBtn();
   }
 };
 
-// 점 추가 (공통 함수)
-function addPoint(pos) {
+// 📌 공통 클릭 처리 (PC + 모바일)
+function handleClick(e) {
+  if (!drawing) return;
+  var pos = e.latLng;
+
   if (!clickLine) {
     clickLine = new kakao.maps.Polyline({
       map: map, path: [pos],
@@ -46,24 +40,21 @@ function addPoint(pos) {
   }
 }
 
-// 📌 PC/모바일 이벤트 분리
-if (isMobile()) {
-  kakao.maps.event.addListener(map, 'touchend', function(e){
-    if (drawing) addPoint(e.latLng);
-  });
-} else {
-  kakao.maps.event.addListener(map, 'click', function(e){
-    if (drawing) addPoint(e.latLng);
-  });
-}
-
-// 마우스 이동 → 임시선
-kakao.maps.event.addListener(map,'mousemove',function(e){
+// 📌 공통 이동 처리 (PC + 모바일)
+function handleMove(e) {
   if (!drawing || !clickLine) return;
   var path = clickLine.getPath();
-  moveLine.setPath([path[path.length - 1], e.latLng]);
+  moveLine.setPath([path[path.length-1], e.latLng]);
   moveLine.setMap(map);
-});
+}
+
+// PC 이벤트 등록
+kakao.maps.event.addListener(map, 'click', handleClick);
+kakao.maps.event.addListener(map, 'mousemove', handleMove);
+
+// 모바일 이벤트 등록
+kakao.maps.event.addListener(map, 'touchstart', handleClick);
+kakao.maps.event.addListener(map, 'touchmove', handleMove);
 
 // 점 + 세그먼트 오버레이
 function addDot(position, segDist){
@@ -83,13 +74,11 @@ function addDot(position, segDist){
     });
     distOverlay.setMap(map);
 
-    // PC 전용 클릭 → 종료
-    if (!isMobile()) {
-      content.addEventListener('click', function(evt){
-        evt.stopPropagation();
-        finishMeasure(position);
-      });
-    }
+    // 종료 버튼 역할
+    content.addEventListener('click', function(evt){
+      evt.stopPropagation();
+      finishMeasure(position);
+    });
   }
   dots.push({circle: circle, distance: distOverlay});
 }
@@ -100,7 +89,7 @@ function finishMeasure(pos){
   var path = clickLine.getPath();
   if (path.length < 2) return;
 
-  // 마지막 점 제거 (누적거리에서 제외)
+  // 마지막 점 제거
   var lastDot = dots[dots.length - 1];
   if (lastDot) {
     if (lastDot.circle) lastDot.circle.setMap(null);
@@ -119,17 +108,14 @@ function finishMeasure(pos){
   box.className = 'distanceInfo';
   box.innerHTML = '총거리 <span class="number">' + totalLen + '</span>m <span class="closeBtn">X</span>';
 
-  // 닫기 버튼
   box.querySelector('.closeBtn').onclick = function(e){
     e.stopPropagation();
     resetMeasure();
     drawing = false;
     btn.classList.remove('active');
     map.setCursor('');
-    hideFinishBtn();
   };
 
-  // 총거리 박스는 마지막 클릭점의 오른쪽-아래로 약간 띄워 배치
   totalOverlay = new kakao.maps.CustomOverlay({
     map: map, position: pos, content: box,
     xAnchor: 0, yAnchor: 0, pixelOffset: new kakao.maps.Point(10, 10)
@@ -138,7 +124,6 @@ function finishMeasure(pos){
   drawing = false;
   btn.classList.remove('active');
   map.setCursor('');
-  hideFinishBtn();
 }
 
 // 초기화
@@ -151,25 +136,4 @@ function resetMeasure(){
     if (d.distance) d.distance.setMap(null);
   });
   dots = [];
-}
-
-// 📱 모바일 종료 버튼 표시
-function showFinishBtn(){
-  if (!finishBtn) {
-    finishBtn = document.createElement('button');
-    finishBtn.innerText = "측정 종료";
-    finishBtn.style.cssText = "position:absolute;bottom:70px;left:10px;z-index:1000;padding:6px 12px;border-radius:6px;border:1px solid #666;background:#fff;font-size:14px;cursor:pointer;";
-    finishBtn.onclick = function(){
-      if (clickLine) {
-        var path = clickLine.getPath();
-        if (path.length > 1) finishMeasure(path[path.length-1]);
-      }
-    };
-    document.body.appendChild(finishBtn);
-  }
-  finishBtn.style.display = 'block';
-}
-
-function hideFinishBtn(){
-  if (finishBtn) finishBtn.style.display = 'none';
 }
