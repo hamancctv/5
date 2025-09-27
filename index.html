@@ -1,15 +1,4 @@
 
-<html>
-
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-    <meta charset="utf-8">
-    <title>GIS 모바일</title>
-<link rel="icon" href="https://hamancctv.github.io/5/favicon.ico" sizes="32x32"/>
-	
-</head>
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -17,7 +6,7 @@
   <title>GIS 모바일</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" href="https://hamancctv.github.io/5/favicon.ico" sizes="32x32"/>
-
+    </head>
   <style>
     /* 지도 전체에서 텍스트 선택 방지 */
     #map, #map * {
@@ -230,8 +219,52 @@
     background:#ffeb3b; border:1px solid #333; border-radius:3px;
     font-size:12px; padding:2px 6px; font-weight:bold;
 }
+      
+      /* 거리재기 점 */
+.dot {
+  display:inline-block;
+  width:8px; height:8px;
+  background:#db4040;
+  border-radius:50%;
+  border:2px solid white;
+}
+/* 세그먼트 거리 (말풍선) */
+.dotOverlay {
+  position:relative;
+  background:#fffbe6;
+  border:1px solid #999;
+  border-radius:6px;
+  font-size:12px;
+  padding:3px 6px;
+  white-space:nowrap;
+  box-shadow:0 2px 4px rgba(0,0,0,0.2);
+}
+.dotOverlay:after {
+  content:"";
+  position:absolute;
+  left:50%; bottom:-6px;
+  margin-left:-6px;
+  border-width:6px 6px 0;
+  border-style:solid;
+  border-color:#fffbe6 transparent;
+}
+/* 총거리 박스 */
+.distanceInfo {
+  background:#fff;
+  border:1px solid #333;
+  border-radius:6px;
+  font-size:13px;
+  font-weight:bold;
+  padding:5px 10px;
+  white-space:nowrap;
+}
+.distanceInfo .closeBtn {
+  margin-left:6px;
+  cursor:pointer;
+  color:#db4040;
+  font-weight:bold;
+}
   </style>
-</head>
 <body>
   <div id="alert-overlay"><div id="alert-message"></div></div>
 <button id="btnDistance">거리</button>
@@ -271,7 +304,6 @@
     <span id="btnTrackMe" class="btn btn-common" onclick="toggleTracking()">추적</span>
   </div>
     
-</body>
 
 <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=2634b7b6dd61e41a4d6c0bf40a2ef820&libraries=services,clusterer,drawing"></script>
 <script src="https://code.jquery.com/jquery-3.6.1.js" integrity="sha256-3zlB5s2uwoUzrXK3BT7AX3FyvojsraNFxCc2vC/7pNI=" crossorigin="anonymous"></script>
@@ -1075,8 +1107,6 @@ function drawGroupLinesMST() {
 
 <script type="text/javascript" src="https://hamancctv.github.io/5/btnDistance.js"></script>
 
-
-    
     </script>
 
 </body>
