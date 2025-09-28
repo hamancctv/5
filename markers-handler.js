@@ -1,4 +1,3 @@
-<!-- 마커 핸들러 분리 -->
 // markers-handler.js
 (function() {
   const style = document.createElement("style");
@@ -24,12 +23,25 @@
   `;
   document.head.appendChild(style);
 
+  // 상태별 마커 높이
+  const markerHeights = {
+    normal: 42,
+    hover: 50.4,
+    click: 50.4
+  };
+
+  // 오버레이 content 생성 함수
+  function makeOverlayContent(type, text, state = "normal") {
+    return `<div class="overlay-${type}" style="transform:translateY(-${markerHeights[state]}px)">
+      ${text}
+    </div>`;
+  }
+
   // 마커 초기화 함수
   window.initMarkers = function(map, positions) {
     const markers = [];
     const overlays = [];
     const clickOverlays = [];
-    const markerHeight = 42;
 
     // 마커 이미지 (normal / hover / click)
     const normalImage = new kakao.maps.MarkerImage(
@@ -63,7 +75,7 @@
         // hover overlay
         const overlay = new kakao.maps.CustomOverlay({
           position: positions[i].latlng,
-          content: `<div class="overlay-hover" style="transform:translateY(-${markerHeight}px)">${positions[i].content}</div>`,
+          content: makeOverlayContent("hover", positions[i].content, "normal"),
           yAnchor: 1,
           map: null
         });
@@ -71,7 +83,7 @@
         // click overlay
         const clickOverlay = new kakao.maps.CustomOverlay({
           position: positions[i].latlng,
-          content: `<div class="overlay-click" style="transform:translateY(-${markerHeight}px)">${positions[i].content}</div>`,
+          content: makeOverlayContent("click", positions[i].content, "normal"),
           yAnchor: 1,
           map: null
         });
@@ -80,45 +92,48 @@
         kakao.maps.event.addListener(marker, "mouseover", function() {
           marker.__isMouseOver = true;
           if (marker !== selectedMarker) marker.setImage(hoverImage);
+
+          overlay.setContent(makeOverlayContent("hover", positions[i].content, "hover"));
           if (map.getLevel() > 3 && !overlay.getMap()) overlay.setMap(map);
         });
         kakao.maps.event.addListener(marker, "mouseout", function() {
           marker.__isMouseOver = false;
           if (marker !== selectedMarker) marker.setImage(normalImage);
+
+          overlay.setContent(makeOverlayContent("hover", positions[i].content, "normal"));
           if (map.getLevel() > 3) setTimeout(() => overlay.setMap(null), 50);
         });
 
         // click 이벤트 (mousedown + mouseup 분리)
         kakao.maps.event.addListener(marker, "mousedown", function() {
-          // 다른 선택 마커 초기화
           if (selectedMarker && selectedMarker !== marker) {
             selectedMarker.setImage(normalImage);
           }
 
-          // 기존 클릭 오버레이 제거
           clickOverlays.forEach(ov => ov.setMap(null));
           clickOverlays.length = 0;
 
-          marker.setImage(clickImage); // 점프
+          marker.setImage(clickImage);
           selectedMarker = marker;
           clickStartTime = Date.now();
         });
 
         kakao.maps.event.addListener(marker, "mouseup", function() {
           const elapsed = Date.now() - clickStartTime;
-          const delay = Math.max(0, 100 - elapsed); // 최소 0.1초 보장
+          const delay = Math.max(0, 100 - elapsed);
+
           setTimeout(function() {
             if (marker === selectedMarker) {
               if (marker.__isMouseOver) {
-                marker.setImage(hoverImage); // hover 유지
+                marker.setImage(hoverImage);
               } else {
-                marker.setImage(normalImage); // 아니면 normal
+                marker.setImage(normalImage);
               }
-              // 클릭 오버레이 표시
+
+              clickOverlay.setContent(makeOverlayContent("click", positions[i].content, "click"));
               clickOverlay.setMap(map);
               clickOverlays.push(clickOverlay);
 
-              // 좌표 input 업데이트
               document.getElementById("gpsyx").value =
                 positions[i].latlng.getLat() + ", " + positions[i].latlng.getLng();
             }
