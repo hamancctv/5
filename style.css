@@ -213,52 +213,32 @@
       /* 거리재기 점 */
 /* ===== 거리재기 관련 CSS ===== */
 
-/* 점 (빨간 원) */
 .dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  background: #db4040;
-  border-radius: 50%;
-  border: 2px solid white;
+  display:inline-block;
+  width:8px; height:8px;
+  background:#db4040;
+  border-radius:50%;
+  border:2px solid white;
 }
 
-/* 세그먼트 거리 (말풍선) */
-.dotOverlay {
-  position: relative;
-  background: #fffbe6;
-  border: 1px solid #999;
-  border-radius: 6px;
-  font-size: 12px;
-  padding: 3px 6px;
-  white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-.dotOverlay:after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -6px;
-  margin-left: -6px;
-  border-width: 6px 6px 0;
-  border-style: solid;
-  border-color: #fffbe6 transparent;
+.segBox {
+  background:#fff;
+  border:1px solid #666;
+  border-radius:4px;
+  padding:2px 6px;
+  font-size:12px;
+  white-space:nowrap;
+  box-shadow:0 2px 4px rgba(0,0,0,0.2);
 }
 
-/* 총거리 박스 */
-.distanceInfo {
-  background: #fff;
-  border: 1px solid #333;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: bold;
-  padding: 5px 10px;
-  white-space: nowrap;
-}
-.distanceInfo .closeBtn {
-  margin-left: 6px;
-  cursor: pointer;
-  color: #db4040;
-  font-weight: bold;
+.totalBox {
+  background:#fff;
+  border:2px solid #333;
+  border-radius:6px;
+  padding:6px 10px;
+  font-size:14px;
+  font-weight:bold;
+  white-space:nowrap;
+  box-shadow:0 2px 6px rgba(0,0,0,0.3);
 }
 
