@@ -2,6 +2,9 @@
   var btn = document.getElementById('btnDistance');
   var drawing = false, clickLine = null, moveLine = null, dots = [], totalOverlay = null;
 
+  var isTouchMode = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  var el = map.getNode();
+
   btn.addEventListener('click', toggleMeasure);
 
   function toggleMeasure(){
@@ -19,51 +22,72 @@
     }
   }
 
+  // 이벤트 바인딩
   function bindHandlers(){
-    var el = map.getNode(); // 지도 DIV 가져오기
-    el.addEventListener('pointerdown', onPointerDown);
-    el.addEventListener('pointermove', onPointerMove);
-    el.addEventListener('pointerup', onPointerUp);
+    if(isTouchMode){
+      el.addEventListener('touchstart', onTouchStart, {passive:false});
+      el.addEventListener('touchmove',  onTouchMove,  {passive:false});
+      el.addEventListener('touchend',   onTouchEnd,   {passive:false});
+    } else {
+      kakao.maps.event.addListener(map, 'click', onMouseClick);
+      kakao.maps.event.addListener(map, 'mousemove', onMouseMove);
+    }
   }
 
   function unbindHandlers(){
-    var el = map.getNode();
-    el.removeEventListener('pointerdown', onPointerDown);
-    el.removeEventListener('pointermove', onPointerMove);
-    el.removeEventListener('pointerup', onPointerUp);
+    if(isTouchMode){
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove',  onTouchMove);
+      el.removeEventListener('touchend',   onTouchEnd);
+    } else {
+      kakao.maps.event.removeListener(map, 'click', onMouseClick);
+      kakao.maps.event.removeListener(map, 'mousemove', onMouseMove);
+    }
   }
 
-  // 좌표 변환
+  // ========= PC =========
+  function onMouseClick(e){
+    if(!drawing) return;
+    confirmPoint(e.latLng);
+  }
+  function onMouseMove(e){
+    if(!drawing || !clickLine) return;
+    updateMoveLine(e.latLng);
+  }
+
+  // ========= 모바일 =========
+  var pointerDown = false;
+  function onTouchStart(ev){
+    if(!drawing) return;
+    if(ev.touches.length > 1) return; // 두 손가락 이상 → 지도 동작만
+    pointerDown = true;
+    var latlng = pointToLatLng(ev.touches[0].clientX, ev.touches[0].clientY);
+    if(!clickLine) confirmPoint(latlng);
+    else updateMoveLine(latlng);
+  }
+  function onTouchMove(ev){
+    if(!drawing || !clickLine || ev.touches.length > 1 || !pointerDown) return;
+    var latlng = pointToLatLng(ev.touches[0].clientX, ev.touches[0].clientY);
+    updateMoveLine(latlng);
+  }
+  function onTouchEnd(ev){
+    if(!drawing || !clickLine) return;
+    pointerDown = false;
+    if(ev.changedTouches.length !== 1) return;
+    var latlng = pointToLatLng(ev.changedTouches[0].clientX, ev.changedTouches[0].clientY);
+    confirmPoint(latlng);
+  }
+
+  // ========= 공통 로직 =========
+
   function pointToLatLng(clientX, clientY){
-    var rect = map.getNode().getBoundingClientRect();
+    var rect = el.getBoundingClientRect();
     var x = clientX - rect.left;
     var y = clientY - rect.top;
     var proj = map.getProjection();
     return proj.coordsFromContainerPoint(new kakao.maps.Point(x, y));
   }
 
-  // 포인터 이벤트
-  var pointerDown = false;
-  function onPointerDown(e){
-    if(!drawing) return;
-    pointerDown = true;
-    var latlng = pointToLatLng(e.clientX, e.clientY);
-    if(!clickLine) confirmPoint(latlng); 
-    else updateMoveLine(latlng);
-  }
-  function onPointerMove(e){
-    if(!drawing || !clickLine || !pointerDown) return;
-    var latlng = pointToLatLng(e.clientX, e.clientY);
-    updateMoveLine(latlng);
-  }
-  function onPointerUp(e){
-    if(!drawing || !clickLine) return;
-    pointerDown = false;
-    var latlng = pointToLatLng(e.clientX, e.clientY);
-    confirmPoint(latlng); // 손 뗀 위치 확정
-  }
-
-  // 임시선
   function updateMoveLine(latlng){
     if(!moveLine){
       moveLine = new kakao.maps.Polyline({
@@ -76,7 +100,6 @@
     moveLine.setMap(map);
   }
 
-  // 점 확정
   function confirmPoint(pos){
     if(!clickLine){
       clickLine = new kakao.maps.Polyline({
@@ -91,14 +114,13 @@
       path.push(pos);
       clickLine.setPath(path);
 
-      if(moveLine){ moveLine.setMap(null); moveLine = null; }
+      if(moveLine){ moveLine.setMap(null); moveLine=null; }
 
       var segDist = new kakao.maps.Polyline({path:[prev,pos]}).getLength();
       addDot(pos, segDist);
     }
   }
 
-  // 점 + 말풍선
   function addDot(position, segDist){
     var circle = new kakao.maps.CustomOverlay({
       position: position, content: '<span class="dot"></span>', zIndex: 1
@@ -111,7 +133,7 @@
       content.className = 'dotOverlay';
       content.innerHTML = Math.round(segDist) + " m <span style='color:red;cursor:pointer'>✖</span>";
 
-      // 흰박스(X) 클릭 → 종료
+      // 종료 버튼
       content.querySelector('span').onclick = function(e){
         e.stopPropagation();
         finishMeasure(position);
@@ -125,7 +147,6 @@
     dots.push({circle:circle, distance:distOverlay});
   }
 
-  // 종료
   function finishMeasure(pos){
     if(!clickLine) return;
     var totalLen = Math.round(clickLine.getLength());
