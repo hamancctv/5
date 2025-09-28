@@ -212,7 +212,9 @@
       
       /* 거리재기 점 */
 /* ===== 거리재기 관련 CSS ===== */
-/* 버튼 */
+/* ===== 거리재기 관련 CSS ===== */
+
+/* --- 1. 버튼 --- */
 #btnDistance {
   position: absolute;
   top: 10px;
@@ -225,47 +227,60 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 #btnDistance.active {
   background: #db4040;
   color: #fff;
 }
 
-/* 점 */
-.dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  background: #db4040;
-  border-radius: 50%;
-  border: 2px solid #fff;
-}
-
-/* 구간 거리 오버레이 */
-.dotOverlay {
-  background: #fffbe6;
-  border: 1px solid #999;
-  border-radius: 6px;
-  font-size: 12px;
-  padding: 3px 6px;
-  white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-/* 총거리 박스 */
-.distanceInfo {
-  background: #fff;
+/* --- 2. [모바일 전용] 구간 거리 오버레이 박스 (흰색, 클릭 종료) --- */
+.segment-box-mobile {
   border: 1px solid #333;
   border-radius: 6px;
+  background: #FFFFFF; /* 흰색 배경 */
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer; 
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  display: inline-block; /* flex box 충돌 방지를 위해 inline-block 사용 */
+}
+.segment-box-mobile:hover {
+  background: #f0f0f0; 
+}
+
+
+/* --- 3. [PC 전용] 예상 거리 오버레이 박스 --- */
+.prediction-box-pc {
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #fffbe6; /* 예상 거리 색상 */
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+
+/* --- 4. 최종 거리 박스 --- */
+.total-distance-box {
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #fff;
+  padding: 6px 10px;
   font-size: 13px;
   font-weight: bold;
-  padding: 5px 10px;
+  display: flex; /* 내부 요소 정렬을 위해 flex 사용 */
+  align-items: center;
+  cursor: pointer; /* 리셋 기능 강조 */
   white-space: nowrap;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
 }
-.distanceInfo .closeBtn {
-  margin-left: 6px;
-  cursor: pointer;
+.total-distance-box .close-btn-x {
+  margin-left: 8px;
   color: #db4040;
   font-weight: bold;
 }
-
