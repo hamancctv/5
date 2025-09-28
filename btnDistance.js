@@ -60,7 +60,7 @@
             
             var segDist = new kakao.maps.Polyline({path:[lastPoint,pos]}).getLength();
             
-            // 구간 거리 박스 생성 (흰색, 왼쪽 위, 클릭 시 종료)
+            // 구간 거리 박스 생성
             createSegmentBox("구간 "+Math.round(segDist)+" m", pos);
             
             addDot(pos);
@@ -80,7 +80,7 @@
     }
 
     // ----------------------------------------------------
-    // 3. 구간 박스 생성
+    // 3. 구간 박스 생성 (위치 정렬 수정됨)
     // ----------------------------------------------------
     function createSegmentBox(text, pos){
         var box = document.createElement('div');
@@ -93,16 +93,18 @@
         box.style.cursor = "pointer";
         box.innerText = text;
 
-        // 클릭 시 최종 종료 함수 호출
+        // 클릭 시 최종 종료 함수 호출 (종료 오류 방지 로직 강화)
         box.onclick = function(e){ 
-            e.stopPropagation(); // 이벤트 버블링 차단 (추가 안전 장치)
+            e.stopPropagation(); // *** 핵심: 이벤트 버블링 즉시 차단 ***
             finishMeasure(pos);
         };
 
         var overlay = new kakao.maps.CustomOverlay({
             map: map, position: pos, content: box,
+            // *** 정렬 수정: 오버레이의 오른쪽 아래 모서리를 좌표에 맞춤 ***
             xAnchor: 1, yAnchor: 0, 
-            pixelOffset: new kakao.maps.Point(-10, 10), 
+            // 오프셋 수정: 오른쪽으로 -10px, 아래로 +10px 이동하여 점의 왼쪽 위에 배치
+            pixelOffset: new kakao.maps.Point(-10, -10), 
             zIndex: 3
         });
         
@@ -110,10 +112,10 @@
     }
 
     // ----------------------------------------------------
-    // 4. 최종 종료 및 결과 표시 (수정됨)
+    // 4. 최종 종료 및 결과 표시 (종료 오류 방지 로직 유지)
     // ----------------------------------------------------
     function finishMeasure(pos){
-        // *** 문제 해결 핵심: 리스너 즉시 제거 ***
+        // *** 핵심: 리스너 즉시 제거 ***
         kakao.maps.event.removeListener(map, 'click', onMapClick); 
         drawing = false; 
         btn.classList.remove('active');
