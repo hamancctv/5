@@ -212,33 +212,60 @@
       
       /* 거리재기 점 */
 /* ===== 거리재기 관련 CSS ===== */
-
-.dotOverlay {
+/* 버튼 */
+#btnDistance {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  padding: 6px 12px;
+  background: #fff;
+  border: 1px solid #666;
   border-radius: 6px;
-  border: 1px solid #ccc;
-  background: #fffbe6;
-  padding: 4px 8px;
-  font-size: 12px;
-  white-space: nowrap;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+#btnDistance.active {
+  background: #db4040;
+  color: #fff;
 }
 
-.distanceInfo {
+/* 점 */
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #db4040;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+
+/* 구간 거리 오버레이 */
+.dotOverlay {
+  background: #fffbe6;
+  border: 1px solid #999;
   border-radius: 6px;
-  border: 1px solid #333;
+  font-size: 12px;
+  padding: 3px 6px;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* 총거리 박스 */
+.distanceInfo {
   background: #fff;
-  padding: 6px 10px;
+  border: 1px solid #333;
+  border-radius: 6px;
   font-size: 13px;
   font-weight: bold;
+  padding: 5px 10px;
   white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
-
 .distanceInfo .closeBtn {
-  margin-left: 8px;
+  margin-left: 6px;
+  cursor: pointer;
   color: #db4040;
   font-weight: bold;
-  cursor: pointer;
 }
-
 
