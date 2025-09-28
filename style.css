@@ -1,3 +1,14 @@
+html, body { height:100%; margin:0; }
+#container { height:100%; width:100%; position:relative; }
+#mapWrapper, #rvWrapper { height:100%; }
+#rvWrapper { display:none; }                   /* 기본은 숨김 */
+#container.view_roadview { display:flex; }     /* 로드뷰 켜지면 50:50 */
+#container.view_roadview #mapWrapper,
+#container.view_roadview #rvWrapper { flex:1; min-width:0; }
+#container.view_roadview #rvWrapper { display:block; }
+
+
+
 /* ===== 거리재기 관련 CSS ===== */
 
 /* --- 1. 버튼 --- */
