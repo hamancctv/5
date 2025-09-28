@@ -1,8 +1,13 @@
 (function(){
   var btn = document.getElementById('btnDistance');
-  var drawing = false, clickLine = null, moveLine = null, lastPoint = null;
+  var drawing = false, clickLine = null, moveLine = null, lastPos = null;
   var segOverlay = null, totalOverlay = null;
-  var segCount = 0; // 구간 개수
+
+  // 지도 초기화
+  var map = new kakao.maps.Map(document.getElementById('map'), {
+    center: new kakao.maps.LatLng(35.2723, 128.4065), // 함안군 중심
+    level: 6
+  });
 
   btn.addEventListener('click', toggleMeasure);
 
@@ -12,125 +17,139 @@
       resetMeasure();
       btn.classList.add('active');
       map.setCursor('crosshair');
-      kakao.maps.event.addListener(map, 'click', onMapClick);
-      map.setDraggable(true);
-      map.setZoomable(true);
+      bindHandlers();
     } else {
-      kakao.maps.event.removeListener(map, 'click', onMapClick);
+      resetMeasure();
       btn.classList.remove('active');
       map.setCursor('');
-      resetMeasure();
+      unbindHandlers();
     }
   }
 
-  function onMapClick(mouseEvent){
+  function bindHandlers(){
+    var el = map.getNode();
+    el.addEventListener('touchstart', onTouchStart, {passive:false});
+    el.addEventListener('touchmove',  onTouchMove,  {passive:false});
+    el.addEventListener('touchend',   onTouchEnd,   {passive:false});
+  }
+  function unbindHandlers(){
+    var el = map.getNode();
+    el.removeEventListener('touchstart', onTouchStart);
+    el.removeEventListener('touchmove',  onTouchMove);
+    el.removeEventListener('touchend',   onTouchEnd);
+  }
+
+  function pointToLatLng(x,y){
+    var rect = map.getNode().getBoundingClientRect();
+    var proj = map.getProjection();
+    return proj.coordsFromContainerPoint(new kakao.maps.Point(x-rect.left, y-rect.top));
+  }
+
+  var dragging = false;
+  function onTouchStart(e){
     if(!drawing) return;
-    var pos = mouseEvent.latLng;
+    e.preventDefault();
+    dragging = true;
+    var t = e.touches[0];
+    var pos = pointToLatLng(t.clientX, t.clientY);
 
-    if(!clickLine){ 
-      // 첫 점
+    if(!clickLine){
       clickLine = new kakao.maps.Polyline({
-        map: map, path:[pos],
-        strokeWeight: 3, strokeColor:'#db4040',
-        strokeOpacity: 1, strokeStyle:'solid'
+        map: map, path: [pos],
+        strokeWeight: 3, strokeColor: '#db4040', strokeOpacity: 1
       });
-      addDot(pos);
-      lastPoint = pos;
-      segCount = 1;
-      map.setDraggable(false);
-      map.setZoomable(false);
-
-    } else if(segCount === 1){
-      // 두번째 점
-      var path = clickLine.getPath();
-      path.push(pos); clickLine.setPath(path);
-      var segDist = new kakao.maps.Polyline({path:[lastPoint,pos]}).getLength();
-      showSegBox("구간 "+Math.round(segDist)+" m", pos, false);
-      addDot(pos);
-      lastPoint = pos;
-      segCount = 2;
-      map.setDraggable(false);
-      map.setZoomable(false);
-
-    } else {
-      // 세번째 점부터
-      var path = clickLine.getPath();
-      path.push(pos); clickLine.setPath(path);
-      var segDist = new kakao.maps.Polyline({path:[lastPoint,pos]}).getLength();
-      showSegBox("구간 "+Math.round(segDist)+" m", pos, true, function(){
-        finishMeasure(pos);
-      });
-      addDot(pos);
-      lastPoint = pos;
-      segCount++;
-      // 지도 자유 이동 허용
-      map.setDraggable(true);
-      map.setZoomable(true);
     }
+    lastPos = pos;
   }
 
-  // 점 표시
-  function addDot(position){
-    var circle = new kakao.maps.CustomOverlay({
-      position: position,
-      content: '<span style="width:8px;height:8px;background:#db4040;border:2px solid #fff;border-radius:50%;display:block;"></span>',
-      zIndex:1
+  function onTouchMove(e){
+    if(!drawing || !clickLine || !dragging) return;
+    e.preventDefault();
+    var t = e.touches[0];
+    var pos = pointToLatLng(t.clientX, t.clientY);
+
+    if(!moveLine){
+      moveLine = new kakao.maps.Polyline({
+        strokeWeight: 3, strokeColor: '#db4040', strokeOpacity: 0.5
+      });
+    }
+    moveLine.setPath([lastPos, pos]);
+    moveLine.setMap(map);
+
+    var dist = Math.round(new kakao.maps.Polyline({path:[lastPos,pos]}).getLength());
+
+    // 세그먼트 오버레이 갱신
+    if(segOverlay) segOverlay.setMap(null);
+    segOverlay = new kakao.maps.CustomOverlay({
+      content: '<div class="dotOverlay">세그먼트: '+dist+'m</div>',
+      position: pos,
+      xAnchor: 0, yAnchor: 1,  // 왼쪽 위로 치우침
+      yAnchor: 1,
+      zIndex: 3
     });
-    circle.setMap(map);
+    segOverlay.setMap(map);
   }
 
-  // 구간 박스 (왼쪽 위 고정, 클릭 시 종료 가능)
-  function showSegBox(text, pos, clickable, onClick){
+  function onTouchEnd(e){
+    if(!drawing || !clickLine) return;
+    e.preventDefault();
+    dragging = false;
+    var t = e.changedTouches[0];
+    var pos = pointToLatLng(t.clientX, t.clientY);
+
+    var path = clickLine.getPath();
+    path.push(pos);
+    clickLine.setPath(path);
+
+    if(moveLine){ moveLine.setMap(null); moveLine = null; }
+
+    var segDist = Math.round(new kakao.maps.Polyline({path:[lastPos,pos]}).getLength());
     if(segOverlay) segOverlay.setMap(null);
 
-    var box = document.createElement('div');
-    box.style.border="1px solid #333";
-    box.style.borderRadius="6px";
-    box.style.background="#fffbe6";
-    box.style.padding="4px 8px";
-    box.style.fontSize="12px";
-    box.style.fontWeight="bold";
-    box.innerText = text;
-
-    if(clickable && onClick){
-      box.style.cursor = "pointer";
-      box.onclick = function(e){ e.stopPropagation(); onClick(); };
-    }
-
     segOverlay = new kakao.maps.CustomOverlay({
-      map: map, position: map.getCenter(),
-      content: box, xAnchor:0, yAnchor:0, 
-      pixelOffset: new kakao.maps.Point(10,10), zIndex:3
+      content: '<div class="dotOverlay">'+segDist+'m</div>',
+      position: pos,
+      xAnchor: 0, yAnchor: 1,
+      zIndex: 3
     });
+    segOverlay.setMap(map);
+
+    // 오버레이 클릭 시 종료
+    kakao.maps.event.addListener(segOverlay, 'click', function(){
+      finishMeasure(pos);
+    });
+
+    lastPos = pos;
   }
 
-  // 최종 종료
   function finishMeasure(pos){
     if(!clickLine) return;
     var totalLen = Math.round(clickLine.getLength());
 
     if(totalOverlay) totalOverlay.setMap(null);
-    var box = document.createElement('div');
-    box.style.border="1px solid #333";
-    box.style.borderRadius="8px";
-    box.style.background="#fff";
-    box.style.padding="6px 10px";
-    box.style.fontSize="13px";
-    box.style.fontWeight="bold";
-    box.innerText = "최종거리: "+totalLen+" m";
-
     totalOverlay = new kakao.maps.CustomOverlay({
-      map: map, position: pos, content: box,
-      xAnchor:1, yAnchor:1,
-      pixelOffset: new kakao.maps.Point(-10,-10), zIndex:3
+      content: '<div class="distanceInfo">최종거리: '+totalLen+'m <span class="closeBtn">X</span></div>',
+      position: pos,
+      xAnchor: 0, yAnchor: 0,
+      zIndex: 3,
+      map: map
     });
 
-    drawing = false;
+    // X 버튼 클릭 → 초기화
+    var closeBtn = totalOverlay.getContent().querySelector('.closeBtn');
+    closeBtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      resetMeasure();
+      drawing=false;
+      btn.classList.remove('active');
+      map.setCursor('');
+      unbindHandlers();
+    });
+
+    drawing=false;
     btn.classList.remove('active');
     map.setCursor('');
-    kakao.maps.event.removeListener(map, 'click', onMapClick);
-    map.setDraggable(true);
-    map.setZoomable(true);
+    unbindHandlers();
   }
 
   function resetMeasure(){
@@ -138,6 +157,6 @@
     if(moveLine){ moveLine.setMap(null); moveLine=null; }
     if(segOverlay){ segOverlay.setMap(null); segOverlay=null; }
     if(totalOverlay){ totalOverlay.setMap(null); totalOverlay=null; }
-    lastPoint=null; segCount=0;
+    lastPos=null;
   }
 })();
