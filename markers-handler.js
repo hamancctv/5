@@ -1,3 +1,4 @@
+<!-- 마커 핸들러 분리 -->
 // markers-handler.js
 (function() {
   const style = document.createElement("style");
@@ -47,13 +48,6 @@
       { offset: new kakao.maps.Point(18, 50.4) }
     );
 
-    // 클릭 순간 점프용 이미지 (더 크게)
-    const jumpImage = new kakao.maps.MarkerImage(
-      "https://t1.daumcdn.net/localimg/localimages/07/2018/pc/img/marker_spot.png",
-      new kakao.maps.Size(42, 58),
-      { offset: new kakao.maps.Point(21, 58) }
-    );
-
     let selectedMarker = null;
     let clickStartTime = 0;
 
@@ -96,32 +90,35 @@
 
         // click 이벤트 (mousedown + mouseup 분리)
         kakao.maps.event.addListener(marker, "mousedown", function() {
+          // 다른 선택 마커 초기화
           if (selectedMarker && selectedMarker !== marker) {
             selectedMarker.setImage(normalImage);
           }
+
+          // 기존 클릭 오버레이 제거
           clickOverlays.forEach(ov => ov.setMap(null));
           clickOverlays.length = 0;
 
-          // 점프 이미지로 교체
-          marker.setImage(jumpImage);
+          marker.setImage(clickImage); // 점프
           selectedMarker = marker;
           clickStartTime = Date.now();
         });
 
         kakao.maps.event.addListener(marker, "mouseup", function() {
           const elapsed = Date.now() - clickStartTime;
-          const delay = Math.max(0, 100 - elapsed);
+          const delay = Math.max(0, 100 - elapsed); // 최소 0.1초 보장
           setTimeout(function() {
             if (marker === selectedMarker) {
               if (marker.__isMouseOver) {
                 marker.setImage(hoverImage); // hover 유지
               } else {
-                marker.setImage(clickImage); // 클릭 후 크기 유지
+                marker.setImage(normalImage); // 아니면 normal
               }
               // 클릭 오버레이 표시
               clickOverlay.setMap(map);
               clickOverlays.push(clickOverlay);
 
+              // 좌표 input 업데이트
               document.getElementById("gpsyx").value =
                 positions[i].latlng.getLat() + ", " + positions[i].latlng.getLng();
             }
