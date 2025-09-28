@@ -1,8 +1,6 @@
 (function(){
   var btn = document.getElementById('btnDistance');
   var drawing = false, clickLine = null, moveLine = null, dots = [], totalOverlay = null;
-
-  var isTouchMode = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
   var el = map.getNode();
 
   btn.addEventListener('click', toggleMeasure);
@@ -13,73 +11,26 @@
       resetMeasure();
       btn.classList.add('active');
       map.setCursor('crosshair');
-      bindHandlers();
+      bindTouchHandlers();
     } else {
-      unbindHandlers();
+      unbindTouchHandlers();
       btn.classList.remove('active');
       map.setCursor('');
       resetMeasure();
     }
   }
 
-  // 이벤트 바인딩
-  function bindHandlers(){
-    if(isTouchMode){
-      el.addEventListener('touchstart', onTouchStart, {passive:false});
-      el.addEventListener('touchmove',  onTouchMove,  {passive:false});
-      el.addEventListener('touchend',   onTouchEnd,   {passive:false});
-    } else {
-      kakao.maps.event.addListener(map, 'click', onMouseClick);
-      kakao.maps.event.addListener(map, 'mousemove', onMouseMove);
-    }
+  // ===== 모바일 전용 이벤트 =====
+  function bindTouchHandlers(){
+    el.addEventListener('touchstart', onTouchStart, {passive:false});
+    el.addEventListener('touchend',   onTouchEnd,   {passive:false});
+  }
+  function unbindTouchHandlers(){
+    el.removeEventListener('touchstart', onTouchStart);
+    el.removeEventListener('touchend',   onTouchEnd);
   }
 
-  function unbindHandlers(){
-    if(isTouchMode){
-      el.removeEventListener('touchstart', onTouchStart);
-      el.removeEventListener('touchmove',  onTouchMove);
-      el.removeEventListener('touchend',   onTouchEnd);
-    } else {
-      kakao.maps.event.removeListener(map, 'click', onMouseClick);
-      kakao.maps.event.removeListener(map, 'mousemove', onMouseMove);
-    }
-  }
-
-  // ========= PC =========
-  function onMouseClick(e){
-    if(!drawing) return;
-    confirmPoint(e.latLng);
-  }
-  function onMouseMove(e){
-    if(!drawing || !clickLine) return;
-    updateMoveLine(e.latLng);
-  }
-
-  // ========= 모바일 =========
-  var pointerDown = false;
-  function onTouchStart(ev){
-    if(!drawing) return;
-    if(ev.touches.length > 1) return; // 두 손가락 이상 → 지도 동작만
-    pointerDown = true;
-    var latlng = pointToLatLng(ev.touches[0].clientX, ev.touches[0].clientY);
-    if(!clickLine) confirmPoint(latlng);
-    else updateMoveLine(latlng);
-  }
-  function onTouchMove(ev){
-    if(!drawing || !clickLine || ev.touches.length > 1 || !pointerDown) return;
-    var latlng = pointToLatLng(ev.touches[0].clientX, ev.touches[0].clientY);
-    updateMoveLine(latlng);
-  }
-  function onTouchEnd(ev){
-    if(!drawing || !clickLine) return;
-    pointerDown = false;
-    if(ev.changedTouches.length !== 1) return;
-    var latlng = pointToLatLng(ev.changedTouches[0].clientX, ev.changedTouches[0].clientY);
-    confirmPoint(latlng);
-  }
-
-  // ========= 공통 로직 =========
-
+  // 좌표 변환
   function pointToLatLng(clientX, clientY){
     var rect = el.getBoundingClientRect();
     var x = clientX - rect.left;
@@ -88,18 +39,22 @@
     return proj.coordsFromContainerPoint(new kakao.maps.Point(x, y));
   }
 
-  function updateMoveLine(latlng){
-    if(!moveLine){
-      moveLine = new kakao.maps.Polyline({
-        strokeWeight: 3, strokeColor: '#db4040',
-        strokeOpacity: 0.5, strokeStyle: 'solid'
-      });
-    }
-    var path = clickLine.getPath();
-    moveLine.setPath([path[path.length-1], latlng]);
-    moveLine.setMap(map);
+  // 터치 시작 (두 손가락 이상이면 무시)
+  function onTouchStart(ev){
+    if(!drawing) return;
+    if(ev.touches.length > 1) return; // 핀치/드래그 → 거리재기 안함
+
+    var latlng = pointToLatLng(ev.touches[0].clientX, ev.touches[0].clientY);
+    confirmPoint(latlng);
   }
 
+  // 터치 끝 (동작 없음, 점 확정은 touchstart에서)
+  function onTouchEnd(ev){
+    if(!drawing) return;
+    if(ev.changedTouches.length !== 1) return;
+  }
+
+  // ========= 공통 로직 =========
   function confirmPoint(pos){
     if(!clickLine){
       clickLine = new kakao.maps.Polyline({
@@ -107,14 +62,11 @@
         strokeWeight: 3, strokeColor: '#db4040',
         strokeOpacity: 1, strokeStyle: 'solid'
       });
-      addDot(pos, null);
     } else {
       var path = clickLine.getPath();
       var prev = path[path.length-1];
       path.push(pos);
       clickLine.setPath(path);
-
-      if(moveLine){ moveLine.setMap(null); moveLine=null; }
 
       var segDist = new kakao.maps.Polyline({path:[prev,pos]}).getLength();
       addDot(pos, segDist);
@@ -130,17 +82,21 @@
     var distOverlay = null;
     if(segDist != null){
       var content = document.createElement('div');
-      content.className = 'dotOverlay';
-      content.innerHTML = Math.round(segDist) + " m <span style='color:red;cursor:pointer'>✖</span>";
+      content.className = 'segBox';
+      content.innerText = Math.round(segDist) + " m";
 
-      // 종료 버튼
-      content.querySelector('span').onclick = function(e){
+      // 이 세그먼트를 클릭하면 종료
+      content.addEventListener('click', function(e){
         e.stopPropagation();
         finishMeasure(position);
-      };
+      });
 
       distOverlay = new kakao.maps.CustomOverlay({
-        position: position, yAnchor: 1, zIndex: 2, content: content
+        position: position,
+        content: content,
+        xAnchor: 0, yAnchor: 0, // 좌상단 고정
+        pixelOffset: new kakao.maps.Point(10, -10), // 선과 겹치지 않게
+        zIndex: 2
       });
       distOverlay.setMap(map);
     }
@@ -153,27 +109,20 @@
 
     if(totalOverlay) totalOverlay.setMap(null);
     var box = document.createElement('div');
-    box.className = 'distanceInfo';
-    box.innerHTML = '총거리 <span class="number">'+totalLen+'</span>m <span class="closeBtn">X</span>';
-
-    box.querySelector('.closeBtn').onclick = function(e){
-      e.stopPropagation();
-      resetMeasure();
-      drawing = false;
-      btn.classList.remove('active');
-      map.setCursor('');
-      unbindHandlers();
-    };
+    box.className = 'totalBox';
+    box.innerHTML = '총거리 ' + totalLen + ' m';
 
     totalOverlay = new kakao.maps.CustomOverlay({
       map: map, position: pos, content: box,
-      xAnchor: 0, yAnchor: 0, pixelOffset: new kakao.maps.Point(10,10)
+      xAnchor: 1, yAnchor: 1, // 오른쪽 아래
+      pixelOffset: new kakao.maps.Point(-10, 10),
+      zIndex: 3
     });
 
     drawing = false;
     btn.classList.remove('active');
     map.setCursor('');
-    unbindHandlers();
+    unbindTouchHandlers();
   }
 
   function resetMeasure(){
