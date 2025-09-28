@@ -1,114 +1,102 @@
 // drawGroupLinesMST.js
 (function () {
-    // 거리 계산 함수
-    function getDistance(latlng1, latlng2) {
-        var R = 6371e3;
-        var lat1 = latlng1.getLat() * Math.PI / 180;
-        var lat2 = latlng2.getLat() * Math.PI / 180;
-        var dLat = (latlng2.getLat() - latlng1.getLat()) * Math.PI / 180;
-        var dLng = (latlng2.getLng() - latlng1.getLng()) * Math.PI / 180;
-        var a = Math.sin(dLat / 2) ** 2 +
-                Math.cos(lat1) * Math.cos(lat2) *
-                Math.sin(dLng / 2) ** 2;
-        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
+  // 그룹명 정규화: 숫자만 있는 그룹은 하이픈/공백 제거 후 비교
+  function normalizeGroupName(name) {
+    if (!name) return null;
+    const onlyNumDash = /^[0-9\s-]+$/;
+    if (onlyNumDash.test(name)) {
+      return name.replace(/[\s-]/g, ""); // 숫자만 남김
+    }
+    return name.trim(); // 그 외는 그대로
+  }
+
+  // 두 좌표 사이 거리 계산
+  function getDistance(a, b) {
+    return Math.sqrt(
+      Math.pow(a.getLat() - b.getLat(), 2) + Math.pow(a.getLng() - b.getLng(), 2)
+    );
+  }
+
+  // MST 생성 (Prim 알고리즘)
+  function buildMSTPaths(markers) {
+    if (markers.length <= 1) return [];
+
+    const connected = [markers[0]];
+    const edges = [];
+    const paths = [];
+
+    while (connected.length < markers.length) {
+      let minEdge = null;
+      let minDist = Infinity;
+
+      connected.forEach(c => {
+        markers.forEach(m => {
+          if (connected.includes(m)) return;
+          const d = getDistance(c.getPosition(), m.getPosition());
+          if (d < minDist) {
+            minDist = d;
+            minEdge = [c, m];
+          }
+        });
+      });
+
+      if (minEdge) {
+        connected.push(minEdge[1]);
+        paths.push([minEdge[0].getPosition(), minEdge[1].getPosition()]);
+      } else break;
+    }
+    return paths;
+  }
+
+  // 전역에 함수 노출
+  let polyByGroup = {};
+
+  window.drawGroupLinesMST = function () {
+    if (!window.markers || !window.markers.length) {
+      console.warn("[MST] markers 없음");
+      return;
+    }
+    const map = window.markers[0].getMap() || window.map;
+    if (!map) return;
+
+    // 토글 OFF → 기존 선 지우기
+    if (Object.keys(polyByGroup).length) {
+      Object.values(polyByGroup).forEach(arr => arr.forEach(pl => pl.setMap(null)));
+      polyByGroup = {};
+      return;
     }
 
-    // 전역 배열 (HTML에서도 접근할 수 있도록 window에 붙임)
-    window.allLines = [];
-    window.allOverlays = [];
+    // 그룹별 분류
+    const groups = {};
+    window.markers.forEach(mk => {
+      const g = normalizeGroupName(mk.group);
+      if (!g) return; // 그룹 없는 마커는 선 연결 안 함
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(mk);
+    });
 
-    // 그룹 선 그리기 함수
-    window.drawGroupLinesMST = function () {
-        // 기존 라인/오버레이 제거 (토글 기능)
-        if (allLines.length > 0 || allOverlays.length > 0) {
-            allLines.forEach(l => l.setMap(null));
-            allLines = [];
-            allOverlays.forEach(o => o.setMap(null));
-            allOverlays = [];
-            return;
-        }
+    // 그룹별 MST 선 생성
+    Object.keys(groups).forEach(g => {
+      const list = groups[g];
+      if (list.length < 2) return;
 
-        var groupMarkers = {};
+      const paths = buildMSTPaths(list);
+      const arr = [];
 
-        markers.forEach(m => {
-            if (!m.group) return; // 그룹명이 없는 마커 무시
+      paths.forEach(path => {
+        arr.push(
+          new kakao.maps.Polyline({
+            path,
+            strokeWeight: 3,
+            strokeColor: "#db4040",
+            strokeOpacity: 0.9,
+            strokeStyle: "solid",
+            map,
+          })
+        );
+      });
 
-            if (/^[\d-]+$/.test(m.group)) {
-                // 숫자+하이픈만 있는 그룹
-                var key = m.group.replace(/-/g, '');
-                if (!groupMarkers[key]) groupMarkers[key] = [];
-                groupMarkers[key].push(m);
-            } else {
-                // 숫자+하이픈 외 문자 포함 → 오버레이용
-                var key = 'overlay_' + Math.random();
-                groupMarkers[key] = [m];
-            }
-        });
-
-        for (var g in groupMarkers) {
-            var group = groupMarkers[g];
-            if (group.length === 0) continue;
-
-            // 숫자 그룹 → MST 연결
-            if (/^\d+$/.test(g) && group.length > 1) {
-                var n = group.length,
-                    selected = Array(n).fill(false),
-                    dist = Array(n).fill(Infinity),
-                    parent = Array(n).fill(-1);
-                dist[0] = 0;
-
-                for (var k = 0; k < n; k++) {
-                    var u = -1;
-                    for (var i = 0; i < n; i++) {
-                        if (!selected[i] && (u == -1 || dist[i] < dist[u])) u = i;
-                    }
-                    selected[u] = true;
-                    for (var v = 0; v < n; v++) {
-                        if (!selected[v]) {
-                            var d = getDistance(group[u].getPosition(), group[v].getPosition());
-                            if (d < dist[v]) { dist[v] = d; parent[v] = u; }
-                        }
-                    }
-                }
-
-                for (var i = 1; i < n; i++) {
-                    var path = [group[i].getPosition(), group[parent[i]].getPosition()];
-                    var line = new kakao.maps.Polyline({
-                        path: path,
-                        strokeWeight: 5,
-                        strokeColor: '#FF5C5C',
-                        strokeOpacity: 0.5,
-                        strokeStyle: 'solid',
-                        zIndex: 999
-                    });
-                    line.setMap(map);
-                    allLines.push(line);
-                }
-            } else if (!/^\d+$/.test(g)) {
-                // 문자 포함 그룹 → 오버레이 표시
-                var pos = group[0].getPosition();
-                if (pos) {
-                    var overlay = new kakao.maps.CustomOverlay({
-                        position: pos,
-                        content: `
-                          <div style="
-                            padding:4px 8px;
-                            background:#fff;
-                            border:1px solid #333;
-                            border-radius:4px;
-                            font-size:13px;
-                            font-weight:bold;
-                            white-space:nowrap;
-                          ">
-                            ${group[0].group}
-                          </div>
-                        `,
-                        map: map
-                    });
-                    allOverlays.push(overlay);
-                }
-            }
-        }
-    };
+      polyByGroup[g] = arr;
+    });
+  };
 })();
