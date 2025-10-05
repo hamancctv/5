@@ -8,11 +8,6 @@
     }
     /* 입력 가능한 영역은 선택 가능 */
 
-.map_wrap .overlay-hover {
-  background-color: #fff !important;
-  opacity: 1 !important;
-  background-image: none !important;
-}
 
     #container {overflow:hidden;height:100%;position:relative;}
     #mapWrapper {width:100%;height:100%;z-index:1;}
