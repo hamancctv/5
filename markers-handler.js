@@ -163,10 +163,17 @@
           });
 
           // 오버레이
-          const el = document.createElement("div");
-          el.className = "overlay-hover";
-          el.style.transform = `translateY(${baseY}px)`;
-          el.textContent = pos.content;
+const el = document.createElement("div");
+el.className = "overlay-hover";
+
+// ⭐ [수정] 인라인 스타일로 배경색과 불투명도를 최우선으로 강제합니다.
+el.style.backgroundColor = "#fff"; 
+el.style.opacity = "1";
+el.style.background = "#fff"; 
+el.style.padding = "2px 6px"; // (선택 사항: 크기 확보를 위해)
+
+el.style.transform = `translateY(${baseY}px)`;
+el.textContent = pos.content;
 
           const overlay = new kakao.maps.CustomOverlay({
             position: pos.latlng, content: el, yAnchor:1, map:null
